@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\ClubMembership;
+use App\Models\ClubPost;
+use App\Models\ClubGallery;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -20,6 +22,7 @@ class Club extends Model
         'logo',
         'president_id',
     ];
+
     public function president()
     {
         return $this->belongsTo(User::class, 'president_id');
@@ -33,5 +36,15 @@ class Club extends Model
     public function memberships()
     {
         return $this->hasMany(ClubMembership::class);
+    }
+
+    public function posts()
+    {
+        return $this->hasMany(ClubPost::class)->latest();
+    }
+
+    public function gallery()
+    {
+        return $this->hasMany(ClubGallery::class)->latest();
     }
 }

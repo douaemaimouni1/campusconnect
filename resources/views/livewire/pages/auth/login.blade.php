@@ -12,16 +12,24 @@ new #[Layout('layouts.guest')] class extends Component
     /**
      * Handle an incoming authentication request.
      */
-    public function login(): void
-    {
-        $this->validate();
+  public function login(): void
+{
+    $this->validate();
 
-        $this->form->authenticate();
+    $this->form->authenticate();
 
-        Session::regenerate();
+    Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+    if (! auth()->user()->profile_completed) {
+        $this->redirect(route('onboarding'), navigate: true);
+        return;
     }
+
+    $this->redirectIntended(
+        default: route('home', absolute: false),
+        navigate: true
+    );
+}
 }; ?>
 
 <div>
@@ -58,7 +66,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}" wire:navigate>
+                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif

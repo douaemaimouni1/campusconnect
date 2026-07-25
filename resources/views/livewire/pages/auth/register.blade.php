@@ -14,7 +14,7 @@ new #[Layout('layouts.guest')] class extends Component
     public string $email = '';
     public string $password = '';
     public string $password_confirmation = '';
-
+    public string $department = '';
     /**
      * Handle an incoming registration request.
      */
@@ -24,6 +24,7 @@ new #[Layout('layouts.guest')] class extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+            'department' => ['required', 'string', 'max:100'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -32,7 +33,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         Auth::login($user);
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect(route('onboarding', absolute: false), navigate: true);
     }
 }; ?>
 
@@ -51,6 +52,21 @@ new #[Layout('layouts.guest')] class extends Component
             <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
+        <!-- Department -->
+<div class="mt-4">
+    <x-input-label for="department" :value="__('Département')" />
+    <select wire:model="department" id="department" name="department" required
+            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
+        <option value="">Choisir...</option>
+        <option value="Génie Informatique">Génie Informatique</option>
+        <option value="Génie Civil">Génie Civil</option>
+        <option value="Génie Industriel">Génie Industriel</option>
+        <option value="Génie Électrique">Génie Électrique</option>
+        <option value="Génie Mécanique">Génie Mécanique</option>
+        <option value="Autre">Autre</option>
+    </select>
+    <x-input-error :messages="$errors->get('department')" class="mt-2" />
+</div>
 
         <!-- Password -->
         <div class="mt-4">
@@ -76,7 +92,7 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}" wire:navigate>
+            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 

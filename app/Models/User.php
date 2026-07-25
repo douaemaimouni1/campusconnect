@@ -20,8 +20,8 @@ class User extends Authenticatable
         'department',
         'bio',
         'avatar',
+        'profile_completed',
     ];
-
 
     protected $hidden = [
         'password',
@@ -33,6 +33,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'profile_completed' => 'boolean',
         ];
     }
 
@@ -41,19 +42,16 @@ class User extends Authenticatable
         return $this->hasMany(Club::class, 'president_id');
     }
 
-  
     public function clubMemberships()
     {
         return $this->hasMany(ClubMembership::class);
     }
 
-   
     public function eventRegistrations()
     {
         return $this->hasMany(EventRegistration::class);
     }
 
- 
     public function isSuperAdmin(): bool
     {
         return $this->role === 'superAdmin';
