@@ -1,17 +1,21 @@
-<x-app-layout>
+<div>
 
-    <x-slot name="header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <h2 class="font-semibold text-2xl text-gray-800">
             {{ $club->name }}
         </h2>
-    </x-slot>
+    </div>
 
     <div class="max-w-3xl mx-auto py-8 px-6">
 
         {{-- ================= HEADER DU CLUB ================= --}}
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
 
-            <div class="h-40 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+            <div class="h-40 bg-gradient-to-r from-indigo-500 to-purple-500">
+    @if ($club->banner)
+        <img src="{{ asset('storage/' . $club->banner) }}" class="w-full h-full object-cover">
+    @endif
+</div>
 
             <div class="px-8 pb-8">
 
@@ -35,37 +39,52 @@
                             <h1 class="text-2xl font-bold text-gray-900">
                                 {{ $club->name }}
                             </h1>
-                            <p class="text-sm text-gray-400 mt-1">
+                            <button
+                                wire:click="toggleMembersModal"
+                                class="text-sm text-gray-400 hover:text-indigo-600 hover:underline mt-1 transition">
                                 {{ $club->members_count }} membre{{ $club->members_count > 1 ? 's' : '' }}
-                            </p>
+                            </button>
                         </div>
 
                     </div>
-
                     {{-- Bouton d'adhésion --}}
                     <div class="mt-6 md:mt-0 md:pb-2">
 
                         @if ($club->president_id === auth()->id())
 
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 flex-wrap">
 
                                 <span class="inline-block bg-amber-50 text-amber-600 px-6 py-2 rounded-xl font-semibold">
                                     👑 Vous êtes le président
                                 </span>
 
                                 <a href="{{ route('clubs.requests', $club) }}"
-
                                    class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-semibold transition">
                                     📋 Gérer les demandes
+                                </a>
+
+                                <a href="{{ route('clubs.edit', $club) }}"
+                                   class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-xl font-semibold transition">
+                                    ✏️ Modifier
                                 </a>
 
                             </div>
 
                         @elseif ($membershipStatus === 'accepted')
 
-                            <span class="inline-block bg-green-50 text-green-600 px-6 py-2 rounded-xl font-semibold">
-                                ✓ Membre
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="inline-block bg-green-50 text-green-600 px-6 py-2 rounded-xl font-semibold">
+                                    ✓ Membre
+                                </span>
+
+                                <button
+                                    wire:click="leaveClub"
+                                    wire:confirm="Quitter ce club ?"
+                                    wire:loading.attr="disabled"
+                                    class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
+                                    Quitter le club
+                                </button>
+                            </div>
 
                         @elseif ($membershipStatus === 'pending')
 
@@ -89,6 +108,18 @@
                         @endif
 
                     </div>
+
+                    @if (auth()->user()->role === 'superAdmin')
+                        <div class="mt-3 md:mt-0 md:pb-2">
+                            <button
+                                wire:click="deleteClub"
+                                wire:confirm="Supprimer définitivement ce club ? Cette action est irréversible."
+                                wire:loading.attr="disabled"
+                                class="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-2 rounded-xl font-semibold transition">
+                                🗑️ Supprimer le club
+                            </button>
+                        </div>
+                    @endif
 
                 </div>
 
@@ -254,4 +285,62 @@
 
     </div>
 
-</x-app-layout>
+    {{-- ================= MODALE : LISTE DES MEMBRES ================= --}}
+    @if ($showMembersModal)
+
+        <div
+            wire:click.self="toggleMembersModal"
+            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+
+                <div class="flex items-center justify-between p-5 border-b border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800">
+                        👥 Membres ({{ $members->count() }})
+                    </h3>
+                    <button
+                        wire:click="toggleMembersModal"
+                        class="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                        ✕
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto p-5 space-y-3">
+
+                    @forelse ($members as $membership)
+
+                        <div wire:key="member-{{ $membership->id }}" class="flex items-center gap-3">
+
+                            @if ($membership->user->avatar)
+                                <img src="{{ asset('storage/' . $membership->user->avatar) }}"
+                                     class="w-10 h-10 rounded-full object-cover">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-600 text-sm">
+                                    {{ strtoupper(substr($membership->user->name, 0, 1)) }}
+                                </div>
+                            @endif
+
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">{{ $membership->user->name }}</p>
+                                <p class="text-xs text-gray-400">
+                                    Membre depuis {{ $membership->responded_at?->translatedFormat('d F Y') ?? $membership->created_at->translatedFormat('d F Y') }}
+                                </p>
+                            </div>
+
+                        </div>
+
+                    @empty
+
+                        <p class="text-gray-400 text-sm text-center py-4">Aucun membre pour le moment.</p>
+
+                    @endforelse
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+</div>

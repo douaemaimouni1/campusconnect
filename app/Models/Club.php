@@ -16,13 +16,13 @@ class Club extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name',
-        'description',
-        'category',
-        'logo',
-        'president_id',
-    ];
-
+    'name',
+    'description',
+    'category',
+    'logo',
+    'banner',
+    'president_id',
+];
     public function president()
     {
         return $this->belongsTo(User::class, 'president_id');

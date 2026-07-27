@@ -101,27 +101,32 @@
 
                 <div class="bg-white rounded-xl shadow p-6">
 
-                    <ul class="space-y-4">
+                    <ul class="space-y-1">
 
                         @foreach ($this->popularClubs as $club)
 
-                            <li wire:key="club-{{ $club->id }}" class="flex items-center justify-between">
+                            <li wire:key="club-{{ $club->id }}">
 
-                                <div class="flex items-center gap-3">
-                                    @if ($club->logo)
-                                        <img src="{{ asset('storage/' . $club->logo) }}"
-                                             class="w-8 h-8 rounded-full object-cover">
-                                    @else
-                                        <span class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm">
-                                            🏛
-                                        </span>
-                                    @endif
-                                    <span>{{ $club->name }}</span>
-                                </div>
+                                <a href="{{ route('clubs.show', $club) }}"
+                                   class="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-gray-50 transition">
 
-                                <span class="text-sm text-gray-400">
-                                    {{ $club->members_count }} membre{{ $club->members_count > 1 ? 's' : '' }}
-                                </span>
+                                    <div class="flex items-center gap-3">
+                                        @if ($club->logo)
+                                            <img src="{{ asset('storage/' . $club->logo) }}"
+                                                 class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <span class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm">
+                                                🏛
+                                            </span>
+                                        @endif
+                                        <span class="text-gray-800">{{ $club->name }}</span>
+                                    </div>
+
+                                    <span class="text-sm text-gray-400">
+                                        {{ $club->members_count }} membre{{ $club->members_count > 1 ? 's' : '' }}
+                                    </span>
+
+                                </a>
 
                             </li>
 

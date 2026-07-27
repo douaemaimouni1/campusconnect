@@ -30,7 +30,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function ()  {
     Route::get('/clubs', ClubsIndex::class)->name('clubs.index');
 
     Route::get('/clubs/create', ClubForm::class)->name('clubs.create');
-
+    Route::get('/clubs/{club}/edit', ClubForm::class)->name('clubs.edit');
     Route::get('/clubs/{club}/requests', ClubsRequests::class)->name('clubs.requests');
 
     Route::get('/clubs/{club}', ClubsShow::class)->name('clubs.show');

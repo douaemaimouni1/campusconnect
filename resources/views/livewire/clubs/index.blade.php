@@ -81,18 +81,23 @@
                             </div>
 
                           
-                            <div class="mt-5">
+                            <div class="mt-5 flex gap-2">
+
+                                <a href="{{ route('clubs.show', $club) }}"
+                                   class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-semibold transition">
+                                    👁 Voir
+                                </a>
 
                                 @if ($isPresident)
 
-                                    <div class="w-full bg-yellow-50 text-yellow-700 py-2 rounded-lg font-semibold text-center">
-                                        👑 Vous êtes le président
+                                    <div class="flex-1 bg-yellow-50 text-yellow-700 py-2 rounded-lg font-semibold text-center">
+                                        👑 Président
                                     </div>
 
                                 @elseif ($status === 'accepted')
 
                                     <button disabled
-                                        class="w-full bg-green-50 text-green-600 py-2 rounded-lg font-semibold cursor-default">
+                                        class="flex-1 bg-green-50 text-green-600 py-2 rounded-lg font-semibold cursor-default">
                                         ✓ Membre
                                     </button>
 
@@ -102,11 +107,11 @@
                                         wire:click="cancelRequest({{ $club->id }})"
                                         wire:loading.attr="disabled"
                                         wire:target="cancelRequest({{ $club->id }})"
-                                        class="group w-full bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 disabled:opacity-50 py-2 rounded-lg font-semibold transition">
+                                        class="group flex-1 bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 disabled:opacity-50 py-2 rounded-lg font-semibold transition">
 
                                         <span wire:loading.remove wire:target="cancelRequest({{ $club->id }})">
-                                            <span class="group-hover:hidden">Demande envoyée</span>
-                                            <span class="hidden group-hover:inline">✕ Annuler la demande</span>
+                                            <span class="group-hover:hidden">Envoyée</span>
+                                            <span class="hidden group-hover:inline">✕ Annuler</span>
                                         </span>
 
                                         <span wire:loading wire:target="cancelRequest({{ $club->id }})">
@@ -121,7 +126,7 @@
                                         wire:click="joinClub({{ $club->id }})"
                                         wire:loading.attr="disabled"
                                         wire:target="joinClub({{ $club->id }})"
-                                        class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2 rounded-lg font-semibold transition">
+                                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2 rounded-lg font-semibold transition">
                                         <span wire:loading.remove wire:target="joinClub({{ $club->id }})">
                                             Rejoindre
                                         </span>

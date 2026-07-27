@@ -6,8 +6,10 @@ use App\Models\Club;
 use App\Models\ClubMembership;
 use App\Models\EventRegistration;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.app')]
 class Show extends Component
 {
     public Club $club;
@@ -15,6 +17,8 @@ class Show extends Component
     public ?string $membershipStatus = null;
 
     public array $eventRegistrations = [];
+
+    public bool $showMembersModal = false;
 
     public function mount(Club $club)
     {
@@ -34,6 +38,11 @@ class Show extends Component
             ->whereIn('status', ['pending', 'confirmed'])
             ->pluck('status', 'event_id')
             ->toArray();
+    }
+
+    public function toggleMembersModal()
+    {
+        $this->showMembersModal = ! $this->showMembersModal;
     }
 
     public function joinClub()
@@ -57,6 +66,16 @@ class Show extends Component
         ClubMembership::where('user_id', Auth::id())
             ->where('club_id', $this->club->id)
             ->where('status', 'pending')
+            ->delete();
+
+        $this->refreshStatuses();
+    }
+
+    public function leaveClub()
+    {
+        ClubMembership::where('user_id', Auth::id())
+            ->where('club_id', $this->club->id)
+            ->where('status', 'accepted')
             ->delete();
 
         $this->refreshStatuses();
@@ -107,8 +126,14 @@ class Show extends Component
             }])
             ->get();
 
+        $members = $this->club->memberships()
+            ->where('status', 'accepted')
+            ->with('user')
+            ->get();
+
         return view('livewire.clubs.show', [
             'posts' => $posts,
+            'members' => $members,
         ]);
     }
 }

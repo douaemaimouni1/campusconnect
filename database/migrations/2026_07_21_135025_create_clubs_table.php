@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('category');
             $table->string('logo')->nullable();
+            $table->string('banner')->nullable();
 
             $table->foreignId('president_id')
                 ->constrained('users')

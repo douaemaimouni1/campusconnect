@@ -32,6 +32,12 @@ class Index extends Component
     {
         $userId = Auth::id();
 
+        $club = Club::find($clubId);
+
+        if (! $club || $club->president_id === $userId) {
+            return;
+        }
+
         $alreadyExists = ClubMembership::where('user_id', $userId)
             ->where('club_id', $clubId)
             ->whereIn('status', ['pending', 'accepted'])
