@@ -8,6 +8,12 @@
 
     <div class="max-w-3xl mx-auto py-8 px-6">
 
+        @if (session()->has('error'))
+            <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-6">
+                {{ session('error') }}
+            </div>
+        @endif
+
         {{-- ================= HEADER DU CLUB ================= --}}
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
 
@@ -68,6 +74,11 @@
                                     ✏️ Modifier
                                 </a>
 
+                                <a href="{{ route('events.create', $club) }}"
+                                   class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-semibold transition">
+                                    ➕ Créer un événement
+                                </a>
+
                             </div>
 
                         @elseif ($membershipStatus === 'accepted')
@@ -93,7 +104,7 @@
                                 wire:loading.attr="disabled"
                                 class="group bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
                                 <span class="group-hover:hidden">Demande envoyée</span>
-                                <span class="hidden group-hover:inline">✕ Annuler</span>
+                                <span class="hidden group-hover:inline">✗ Annuler</span>
                             </button>
 
                         @else
@@ -108,18 +119,6 @@
                         @endif
 
                     </div>
-
-                    @if (auth()->user()->role === 'superAdmin')
-                        <div class="mt-3 md:mt-0 md:pb-2">
-                            <button
-                                wire:click="deleteClub"
-                                wire:confirm="Supprimer définitivement ce club ? Cette action est irréversible."
-                                wire:loading.attr="disabled"
-                                class="bg-red-50 hover:bg-red-100 text-red-600 px-6 py-2 rounded-xl font-semibold transition">
-                                🗑️ Supprimer le club
-                            </button>
-                        </div>
-                    @endif
 
                 </div>
 
@@ -172,7 +171,7 @@
         @if ($posts->isEmpty())
 
             <div class="bg-white rounded-2xl shadow p-12 text-center">
-                <p class="text-4xl mb-3">📝</p>
+                <p class="text-4xl mb-3">📭</p>
                 <p class="text-gray-400">Aucune publication pour le moment.</p>
             </div>
 
@@ -186,17 +185,17 @@
 
                         <div class="flex items-center gap-3 mb-4">
 
-                            @if ($post->user->avatar)
-                                <img src="{{ asset('storage/' . $post->user->avatar) }}"
+                            @if ($club->logo)
+                                <img src="{{ asset('storage/' . $club->logo) }}"
                                      class="w-10 h-10 rounded-full object-cover">
                             @else
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-600">
-                                    {{ strtoupper(substr($post->user->name, 0, 1)) }}
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-lg">
+                                    🏛
                                 </div>
                             @endif
 
                             <div>
-                                <p class="font-semibold">{{ $post->user->name }}</p>
+                                <p class="font-semibold">{{ $club->name }}</p>
                                 <p class="text-xs text-gray-400">
                                     {{ $post->created_at->diffForHumans() }}
                                 </p>
@@ -219,6 +218,7 @@
                             @php
                                 $linkedEvent = $post->event;
                                 $linkedStatus = $eventRegistrations[$linkedEvent->id] ?? null;
+                                $linkedEventIsFull = $linkedEvent->participants_count >= $linkedEvent->capacity;
                             @endphp
 
                             <div class="mt-4 border border-gray-200 rounded-xl p-4">
@@ -238,14 +238,20 @@
 
                                 <div class="mt-4">
 
-                                    @if ($linkedStatus === 'confirmed')
+                                    @if ($club->president_id === auth()->id())
+
+                                        <span class="inline-block w-full text-center bg-amber-50 text-amber-600 py-2 rounded-lg font-semibold">
+                                            👑 Vous êtes l'organisateur
+                                        </span>
+
+                                    @elseif ($linkedStatus === 'confirmed')
 
                                         <button
                                             wire:click="cancelEventRegistration({{ $linkedEvent->id }})"
                                             wire:loading.attr="disabled"
                                             class="group w-full bg-green-50 hover:bg-red-50 text-green-600 hover:text-red-600 py-2 rounded-lg font-semibold transition">
                                             <span class="group-hover:hidden">✓ Inscrit</span>
-                                            <span class="hidden group-hover:inline">✕ Annuler</span>
+                                            <span class="hidden group-hover:inline">✗ Annuler</span>
                                         </button>
 
                                     @elseif ($linkedStatus === 'pending')
@@ -255,8 +261,14 @@
                                             wire:loading.attr="disabled"
                                             class="group w-full bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 py-2 rounded-lg font-semibold transition">
                                             <span class="group-hover:hidden">Demande envoyée</span>
-                                            <span class="hidden group-hover:inline">✕ Annuler</span>
+                                            <span class="hidden group-hover:inline">✗ Annuler</span>
                                         </button>
+
+                                    @elseif ($linkedEventIsFull)
+
+                                        <span class="inline-block w-full text-center bg-gray-100 text-gray-400 py-2 rounded-lg font-semibold">
+                                            Complet
+                                        </span>
 
                                     @else
 
@@ -301,7 +313,7 @@
                     <button
                         wire:click="toggleMembersModal"
                         class="text-gray-400 hover:text-gray-600 text-xl leading-none">
-                        ✕
+                        ✗
                     </button>
                 </div>
 

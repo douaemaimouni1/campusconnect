@@ -32,11 +32,24 @@
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
 
+                @php
+                    // IMPORTANT : ces classes sont écrites en toutes lettres (pas construites
+                    // par concaténation type "bg-{{ $color }}-600") car Tailwind ne scanne
+                    // que les classes qu'il voit littéralement dans le code source pour
+                    // décider lesquelles inclure dans le CSS final. Une classe assemblée
+                    // dynamiquement n'est jamais détectée et n'apparaît donc jamais dans le
+                    // fichier CSS compilé, même si le HTML généré est correct.
+                    $colorClasses = [
+                        ['text' => 'text-blue-600', 'button' => 'bg-blue-600 hover:bg-blue-700'],
+                        ['text' => 'text-green-600', 'button' => 'bg-green-600 hover:bg-green-700'],
+                        ['text' => 'text-purple-600', 'button' => 'bg-purple-600 hover:bg-purple-700'],
+                    ];
+                @endphp
+
                 @foreach ($this->popularEvents as $event)
 
                     @php
-                        $colors = ['blue', 'green', 'purple'];
-                        $color = $colors[$loop->index % 3];
+                        $colors = $colorClasses[$loop->index % 3];
                     @endphp
 
                     <div wire:key="event-{{ $event->id }}"
@@ -48,7 +61,7 @@
 
                         <div class="p-5">
 
-                            <p class="text-{{ $color }}-600 font-semibold">
+                            <p class="{{ $colors['text'] }} font-semibold">
                                 {{ $event->club->name }}
                             </p>
 
@@ -68,11 +81,10 @@
                                 {{ $event->participants_count }} / {{ $event->capacity }} participants
                             </p>
 
-                            {{-- La page détail événement n'existe pas encore --}}
-                            <button disabled
-                                class="mt-5 w-full bg-{{ $color }}-300 text-white py-2 rounded-lg cursor-not-allowed">
+                            <a href="{{ route('events.show', $event) }}"
+                                class="mt-5 block text-center w-full {{ $colors['button'] }} text-white py-2 rounded-lg transition">
                                 Voir les détails
-                            </button>
+                            </a>
 
                         </div>
 

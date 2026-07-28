@@ -9,10 +9,15 @@
     <div class="max-w-3xl mx-auto py-8 px-6">
 
         <a href="{{ route('clubs.show', $club) }}"
-
            class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-indigo-600 transition mb-6">
             ← Retour au club
         </a>
+
+        @if (session()->has('error'))
+            <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-6">
+                {{ session('error') }}
+            </div>
+        @endif
 
         {{-- ================= DEMANDES D'ADHÉSION ================= --}}
         <div class="mb-10">
@@ -77,7 +82,7 @@
                                     wire:confirm="Refuser cette demande d'adhésion ? Cette action est définitive."
                                     wire:loading.attr="disabled"
                                     class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 disabled:opacity-50 text-sm px-4 py-2 rounded-lg font-semibold transition">
-                                    ✕ Refuser
+                                    ✗ Refuser
                                 </button>
 
                             </div>
@@ -144,19 +149,25 @@
 
                             <div class="flex items-center gap-2">
 
-                                <button
-                                    wire:click="acceptEventRegistration({{ $request->id }})"
-                                    wire:loading.attr="disabled"
-                                    class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg font-semibold transition">
-                                    ✓ Accepter
-                                </button>
+                                @if ($request->event_is_full)
+                                    <span class="bg-gray-100 text-gray-400 text-sm px-4 py-2 rounded-lg font-semibold">
+                                        Complet
+                                    </span>
+                                @else
+                                    <button
+                                        wire:click="acceptEventRegistration({{ $request->id }})"
+                                        wire:loading.attr="disabled"
+                                        class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm px-4 py-2 rounded-lg font-semibold transition">
+                                        ✓ Accepter
+                                    </button>
+                                @endif
 
                                 <button
                                     wire:click="rejectEventRegistration({{ $request->id }})"
                                     wire:confirm="Refuser cette demande de participation ? Cette action est définitive."
                                     wire:loading.attr="disabled"
                                     class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 disabled:opacity-50 text-sm px-4 py-2 rounded-lg font-semibold transition">
-                                    ✕ Refuser
+                                    ✗ Refuser
                                 </button>
 
                             </div>
