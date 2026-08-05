@@ -59,7 +59,9 @@
                                 @endif
 
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $request->user->name }}</p>
+                                    <a href="{{ route('profile.show', $request->user) }}" class="font-semibold text-gray-800 hover:text-indigo-600 hover:underline">
+                                        {{ $request->user->name }}
+                                    </a>
                                     <p class="text-xs text-gray-400">
                                         {{ $request->user->department ?? 'Département non renseigné' }}
                                         · demandé {{ $request->requested_at?->diffForHumans() ?? $request->created_at->diffForHumans() }}
@@ -137,7 +139,9 @@
                                 @endif
 
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $request->user->name }}</p>
+                                    <a href="{{ route('profile.show', $request->user) }}" class="font-semibold text-gray-800 hover:text-indigo-600 hover:underline">
+                                        {{ $request->user->name }}
+                                    </a>
                                     <p class="text-xs text-gray-400">
                                         veut participer à
                                         <strong class="text-gray-600">{{ $request->event->title }}</strong>

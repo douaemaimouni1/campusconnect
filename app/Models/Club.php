@@ -47,4 +47,17 @@ class Club extends Model
     {
         return $this->hasMany(ClubGallery::class)->latest();
     }
+   
+    public function presidencyTransfers()
+    {
+        return $this->hasMany(ClubPresidencyTransfer::class);
+    }
+
+    public function pendingPresidencyTransfer()
+    {
+        return $this->presidencyTransfers()
+            ->pending()
+            ->latest()
+            ->first();
+    }
 }

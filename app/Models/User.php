@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Club;
 use App\Models\ClubMembership;
+use App\Models\ClubPresidencyTransfer;
 use App\Models\EventRegistration;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -21,6 +22,8 @@ class User extends Authenticatable
         'bio',
         'avatar',
         'profile_completed',
+        'role',
+        'is_banned',
     ];
 
     protected $hidden = [
@@ -34,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'profile_completed' => 'boolean',
+            'is_banned' => 'boolean',
         ];
     }
 
@@ -55,5 +59,25 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->role === 'superAdmin';
+    }
+
+    public function presidencyTransfersInitiated()
+    {
+        return $this->hasMany(ClubPresidencyTransfer::class, 'current_president_id');
+    }
+
+  
+    public function presidencyTransfersProposed()
+    {
+        return $this->hasMany(ClubPresidencyTransfer::class, 'proposed_president_id');
+    }
+
+
+    public function pendingPresidencyProposal()
+    {
+        return $this->presidencyTransfersProposed()
+            ->pending()
+            ->latest()
+            ->first();
     }
 }

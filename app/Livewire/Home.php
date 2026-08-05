@@ -1,20 +1,16 @@
 <?php
-
 namespace App\Livewire;
-
 use App\Models\Club;
 use App\Models\Event;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-
 #[Layout('layouts.app')]
 class Home extends Component
 {
     public string $search = '';
-
     /**
-     * Événements à venir, triés par nombre d'inscriptions confirmées.
+     * Tous les événements à venir, triés par nombre d'inscriptions confirmées.
      * Filtrés par la barre de recherche si elle est remplie.
      */
     #[Computed]
@@ -32,10 +28,8 @@ class Home extends Component
                 $query->where('title', 'like', '%' . $this->search . '%');
             })
             ->orderByDesc('participants_count')
-            ->take(3)
             ->get();
     }
-
     /**
      * Clubs triés par nombre de membres acceptés.
      * Filtrés par la barre de recherche si elle est remplie.
@@ -56,7 +50,6 @@ class Home extends Component
             ->take(4)
             ->get();
     }
-
     public function render()
     {
         return view('livewire.home');

@@ -42,9 +42,9 @@
                     <div wire:key="event-{{ $event->id }}"
                          class="bg-white rounded-xl shadow overflow-hidden hover:shadow-xl transition duration-300">
 
-                        <img
-                            src="{{ $event->image ? asset('storage/' . $event->image) : 'https://picsum.photos/500/300?' . $event->id }}"
-                            class="w-full h-44 object-cover">
+                        @if ($event->image)
+                            <img src="{{ asset('storage/' . $event->image) }}" class="w-full h-44 object-cover">
+                        @endif
 
                         <div class="p-5">
 

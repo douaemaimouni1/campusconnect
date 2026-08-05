@@ -1,10 +1,8 @@
 <?php
-
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -12,11 +10,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
         $middleware->alias([
             'profile.completed' => \App\Http\Middleware\EnsureProfileIsCompleted::class,
+            'superadmin' => \App\Http\Middleware\EnsureUserIsSuperAdmin::class,
+            'not.banned' => \App\Http\Middleware\EnsureUserIsNotBanned::class,
         ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

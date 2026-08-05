@@ -50,6 +50,16 @@
 
                     </x-nav-link>
 
+                    @if(auth()->user()->isSuperAdmin())
+                        <x-nav-link
+                            :href="route('admin.dashboard')"
+                            :active="request()->routeIs('admin.*')">
+
+                            🛠️ Admin
+
+                        </x-nav-link>
+                    @endif
+
                 </div>
 
             </div>
@@ -142,6 +152,15 @@
             ➕ Créer un club
 
         </x-responsive-nav-link>
+
+        @if(auth()->user()->isSuperAdmin())
+            <x-responsive-nav-link
+                :href="route('admin.dashboard')">
+
+                🛠️ Admin
+
+            </x-responsive-nav-link>
+        @endif
 
         <x-responsive-nav-link
             :href="route('profile.edit')">

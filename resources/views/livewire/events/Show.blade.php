@@ -13,9 +13,9 @@
         @endif
 
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
-            <img
-                src="{{ $event->image ? asset('storage/' . $event->image) : 'https://picsum.photos/800/400?' . $event->id }}"
-                class="w-full h-64 object-cover">
+            @if ($event->image)
+                <img src="{{ asset('storage/' . $event->image) }}" class="w-full h-64 object-cover">
+            @endif
             <div class="p-8">
                 <a href="{{ route('clubs.show', $event->club) }}"
                    class="text-indigo-600 font-semibold text-sm hover:underline">
