@@ -5,6 +5,8 @@ namespace App\Livewire\Onboarding;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use App\Support\DepartmentList;
 
 class CompleteProfile extends Component
 {
@@ -17,20 +19,22 @@ class CompleteProfile extends Component
     public $otherDepartment = '';
     public $bio = '';
 
-    public $departments = [
-        'Génie Informatique',
-        'Génie Civil',
-        'Génie Industriel',
-        'Génie Électrique',
-        'Génie Mécanique',
-        'Génie Énergétique',
-        'Autre',
-    ];
+    /**
+     * Liste des départements groupés par catégorie, pour générer les <optgroup>
+     * dans la vue. Remplie une seule fois à l'initialisation du composant
+     * (voir mount()), à partir de la source unique de vérité DepartmentList.
+     */
+    public array $departments = [];
+
+    public function mount()
+    {
+        $this->departments = DepartmentList::grouped();
+    }
 
     protected function rules()
     {
         return [
-            'department' => 'required|string|max:100',
+            'department' => ['required', 'string', Rule::in(DepartmentList::flat())],
             'otherDepartment' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:250',
             'avatar' => 'nullable|image|max:2048',
@@ -47,7 +51,7 @@ class CompleteProfile extends Component
         if ($this->step == 2) {
             $this->validateOnly('department');
 
-            if ($this->department === 'Autre' && empty($this->otherDepartment)) {
+            if ($this->department === DepartmentList::AUTRE && empty($this->otherDepartment)) {
                 $this->addError('otherDepartment', 'Veuillez préciser votre département.');
                 return;
             }
@@ -96,7 +100,7 @@ class CompleteProfile extends Component
     protected function finish()
     {
         $this->validate([
-            'department' => 'required|string|max:100',
+            'department' => ['required', 'string', Rule::in(DepartmentList::flat())],
             'otherDepartment' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:250',
             'avatar' => 'nullable|image|max:2048',
@@ -104,7 +108,7 @@ class CompleteProfile extends Component
 
         $user = Auth::user();
 
-        $user->department = $this->department === 'Autre'
+        $user->department = $this->department === DepartmentList::AUTRE
             ? $this->otherDepartment
             : $this->department;
 

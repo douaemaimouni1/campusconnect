@@ -78,8 +78,13 @@
 
                     <select wire:model.live="department" class="border rounded-xl w-full p-3">
                         <option value="">-- Choisir --</option>
-                        @foreach ($departments as $dep)
-                            <option value="{{ $dep }}">{{ $dep }}</option>
+
+                        @foreach ($departments as $category => $filieres)
+                            <optgroup label="{{ $category }}">
+                                @foreach ($filieres as $dep)
+                                    <option value="{{ $dep }}">{{ $dep }}</option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     </select>
 

@@ -130,10 +130,31 @@
                 </div>
 
                 <div>
-                    <x-input-label for="department" :value="__('Département')" />
-                    <x-text-input wire:model="department" id="department" name="department" type="text" class="mt-1 block w-full" />
-                    <x-input-error class="mt-2" :messages="$errors->get('department')" />
-                </div>
+    <x-input-label for="department" :value="__('Département')" />
+
+    <select wire:model.live="department" id="department" name="department"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <option value="">-- Choisir --</option>
+
+        @foreach ($departments as $category => $filieres)
+            <optgroup label="{{ $category }}">
+                @foreach ($filieres as $dep)
+                    <option value="{{ $dep }}">{{ $dep }}</option>
+                @endforeach
+            </optgroup>
+        @endforeach
+    </select>
+
+    <x-input-error class="mt-2" :messages="$errors->get('department')" />
+
+    @if ($department === 'Autre')
+        <div class="mt-3">
+            <x-input-label for="otherDepartment" :value="__('Précisez votre département')" />
+            <x-text-input wire:model="otherDepartment" id="otherDepartment" name="otherDepartment" type="text" class="mt-1 block w-full" />
+            <x-input-error class="mt-2" :messages="$errors->get('otherDepartment')" />
+        </div>
+    @endif
+</div>
 
                 <div>
                     <x-input-label for="bio" :value="__('Bio')" />

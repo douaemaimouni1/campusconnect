@@ -8,6 +8,7 @@ use App\Models\Club;
 use App\Models\ClubPresidencyTransfer;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
+use App\Support\DepartmentList;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,13 @@ class Edit extends Component
     public string $email = '';
     public ?string $department = '';
     public ?string $bio = '';
+
+    // Texte libre saisi si $department vaut "Autre" (filière hors liste).
+    public ?string $otherDepartment = '';
+
+    // Liste des départements groupés par catégorie, pour générer les <optgroup>
+    // dans la vue. Remplie une seule fois à l'initialisation (voir mount()).
+    public array $departments = [];
 
     // Nouvel avatar en attente d'upload (temporaire, pas encore sauvegardé)
     public $avatar = null;
@@ -60,6 +68,11 @@ class Edit extends Component
 
     /**
      * Pré-remplit le formulaire avec les données actuelles de l'utilisateur connecté.
+     *
+     * Cas particulier du département : si la valeur actuelle en base ne
+     * correspond à aucune filière de la liste (config/departments.php),
+     * on bascule automatiquement le select sur "Autre" et on pré-remplit
+     * le champ texte libre avec cette valeur, pour ne pas la perdre.
      */
     public function mount(): void
     {
@@ -67,8 +80,16 @@ class Edit extends Component
 
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->department = $user->department;
         $this->bio = $user->bio;
+
+        $this->departments = DepartmentList::grouped();
+
+        if ($user->department && ! in_array($user->department, DepartmentList::flat(), true)) {
+            $this->department = DepartmentList::AUTRE;
+            $this->otherDepartment = $user->department;
+        } else {
+            $this->department = $user->department;
+        }
     }
 
     /**
@@ -87,13 +108,27 @@ class Edit extends Component
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
-            'department' => ['nullable', 'string', 'max:255'],
+            'department' => ['nullable', 'string', Rule::in(DepartmentList::flat())],
+            'otherDepartment' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        // Si "Autre" est sélectionné, le texte libre est obligatoire.
+        // On vérifie ceci AVANT de toucher à $user, pour ne rien enregistrer
+        // partiellement si cette condition échoue.
+        if ($validated['department'] === DepartmentList::AUTRE && empty($this->otherDepartment)) {
+            $this->addError('otherDepartment', 'Veuillez préciser votre département.');
+
+            return;
+        }
+
         $user->name = $validated['name'];
-        $user->department = $validated['department'];
+
+        $user->department = $validated['department'] === DepartmentList::AUTRE
+            ? $this->otherDepartment
+            : $validated['department'];
+
         $user->bio = $validated['bio'];
 
         // Upload du nouvel avatar : on supprime l'ancien fichier avant d'enregistrer le nouveau
