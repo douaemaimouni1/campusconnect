@@ -2,13 +2,8 @@
 
     <div class="bg-white rounded-3xl shadow-xl w-full max-w-xl p-10">
 
-        {{-- Barre de progression dynamique --}}
+        {{-- Barre de progression (texte et % retirés, seule la barre reste) --}}
         <div class="mb-10">
-
-            <div class="flex justify-between text-sm text-gray-500 mb-2">
-                <span>Étape {{ $step }} sur 3</span>
-                <span>{{ $step * 33 }}%</span>
-            </div>
 
             <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <div
@@ -40,10 +35,21 @@
                         @endif
                     </div>
 
-                    <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold px-5 py-2 rounded-xl transition">
-                        Choisir une photo
-                        <input type="file" wire:model="avatar" class="hidden" accept="image/*">
-                    </label>
+                    <div class="flex items-center gap-3">
+                        <label class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold px-5 py-2 rounded-xl transition">
+                            Choisir une photo
+                            <input type="file" wire:model="avatar" class="hidden" accept="image/*">
+                        </label>
+
+                        @if ($avatar)
+                            <button
+                                type="button"
+                                wire:click="removeAvatar"
+                                class="text-red-500 hover:text-red-700 font-semibold px-3 py-2 text-sm">
+                                🗑️ Supprimer
+                            </button>
+                        @endif
+                    </div>
 
                     <div wire:loading wire:target="avatar" class="text-sm text-gray-400 mt-3">
                         Chargement...
@@ -139,21 +145,48 @@
 
             <div class="flex gap-3">
 
-                <button
-                    wire:click="skip"
-                    class="text-gray-500 hover:text-gray-700 font-medium px-5 py-3">
-                    Passer
-                </button>
+                @if ($step === 1)
+                    {{-- Étape 1 (photo, facultative) : Passer ou Continuer selon le choix --}}
+                    @if ($avatar)
+                        <button
+                            wire:click="save"
+                            wire:loading.attr="disabled"
+                            class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-semibold transition">
+                            <span wire:loading.remove>Continuer →</span>
+                            <span wire:loading>...</span>
+                        </button>
+                    @else
+                        <button
+                            wire:click="skip"
+                            class="text-gray-500 hover:text-gray-700 font-medium px-5 py-3">
+                            Passer
+                        </button>
+                    @endif
+                @elseif ($step === 2)
+                    {{-- Étape 2 (département, obligatoire) : uniquement Continuer, pas de Passer --}}
+                    <button
+                        wire:click="save"
+                        wire:loading.attr="disabled"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-semibold transition">
+                        <span wire:loading.remove>Continuer →</span>
+                        <span wire:loading>...</span>
+                    </button>
+                @else
+                    {{-- Étape 3 (bio, facultative) : Passer + Terminer --}}
+                    <button
+                        wire:click="skip"
+                        class="text-gray-500 hover:text-gray-700 font-medium px-5 py-3">
+                        Passer
+                    </button>
 
-                <button
-                    wire:click="save"
-                    wire:loading.attr="disabled"
-                    class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-semibold transition">
-                    <span wire:loading.remove>
-                        {{ $step === 3 ? 'Terminer' : 'Continuer →' }}
-                    </span>
-                    <span wire:loading>...</span>
-                </button>
+                    <button
+                        wire:click="save"
+                        wire:loading.attr="disabled"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-semibold transition">
+                        <span wire:loading.remove>Terminer</span>
+                        <span wire:loading>...</span>
+                    </button>
+                @endif
 
             </div>
 

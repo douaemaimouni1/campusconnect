@@ -37,6 +37,11 @@ class CompleteProfile extends Component
         ];
     }
 
+    public function removeAvatar()
+    {
+        $this->avatar = null;
+    }
+
     public function nextStep()
     {
         if ($this->step == 2) {
