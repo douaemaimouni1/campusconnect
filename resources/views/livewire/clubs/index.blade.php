@@ -75,8 +75,8 @@
                                 {{ $club->description }}
                             </p>
 
-                            <div class="flex items-center justify-between mt-4 text-sm text-gray-400">
-                                <span>👤 {{ $club->president->name }}</span>
+                                                       <div class="flex items-center justify-between mt-4 text-sm text-gray-400">
+                                <span>👤 {{ $club->president?->name ?? 'Aucun président' }}</span>
                                 <span>{{ $club->members_count }} membre{{ $club->members_count > 1 ? 's' : '' }}</span>
                             </div>
 

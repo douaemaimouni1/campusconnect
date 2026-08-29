@@ -138,18 +138,31 @@
 
             <div class="grid sm:grid-cols-2 gap-4 text-sm">
 
-                <a href="{{ route('profile.show', $club->president) }}"
-                   class="flex items-center gap-3 hover:opacity-80 transition">
-                    @if ($club->president->avatar)
-                        <img src="{{ asset('storage/' . $club->president->avatar) }}"
-                             class="w-9 h-9 rounded-full object-cover">
-                    @else
-                        <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-600 text-xs">
-                            {{ strtoupper(substr($club->president->name, 0, 1)) }}
+                                @if ($club->president)
+
+                    <a href="{{ route('profile.show', $club->president) }}"
+                       class="flex items-center gap-3 hover:opacity-80 transition">
+                        @if ($club->president->avatar)
+                            <img src="{{ asset('storage/' . $club->president->avatar) }}"
+                                 class="w-9 h-9 rounded-full object-cover">
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-600 text-xs">
+                                {{ strtoupper(substr($club->president->name, 0, 1)) }}
+                            </div>
+                        @endif
+                        <span class="text-gray-500">Président : <strong class="text-gray-800 hover:underline">{{ $club->president->name }}</strong></span>
+                    </a>
+
+                @else
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            ?
                         </div>
-                    @endif
-                    <span class="text-gray-500">Président : <strong class="text-gray-800 hover:underline">{{ $club->president->name }}</strong></span>
-                </a>
+                        <span class="text-gray-400 italic">Aucun président actuellement</span>
+                    </div>
+
+                @endif
 
                 <div class="flex items-center gap-3">
                     <span class="text-lg">🏷️</span>

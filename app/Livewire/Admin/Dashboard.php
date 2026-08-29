@@ -21,25 +21,26 @@ class Dashboard extends Component
     public ?int $confirmingClubDeletion = null;
 
     // Id de l'utilisateur en attente de confirmation simple de bannissement/réactivation
-    // (utilisé uniquement pour la réactivation, ou le bannissement d'un utilisateur
-    // qui n'est président d'aucun club).
+    // (utilisé pour la réactivation, ou le bannissement d'un utilisateur qui n'est
+    // président d'aucun club).
     public ?int $confirmingUserBanToggle = null;
 
-    // Id de l'utilisateur dont le bannissement est bloqué car au moins un de ses
-    // clubs n'a aucun successeur éligible.
-    public ?int $blockedBanUserId = null;
-
-    // Noms des clubs qui bloquent le bannissement (aucun successeur éligible).
-    public array $blockingClubs = [];
-
-    // Id de l'utilisateur pour lequel on doit choisir un ou plusieurs successeurs
-    // avant de pouvoir le bannir.
+    // Id de l'utilisateur pour lequel on doit gérer la succession de ses club(s)
+    // avant de le bannir. Le bannissement est TOUJOURS exécuté immédiatement au
+    // moment de la validation, quel que soit l'état des clubs (voir submitUserBan()).
     public ?int $selectingSuccessorUserId = null;
 
+    // Clubs présidés par l'utilisateur AVEC au moins un successeur éligible.
     // [club_id => ['club_name' => string, 'candidates' => Collection<User>]]
     public array $clubsNeedingSuccessor = [];
 
-    // [club_id => id du candidat choisi]
+    // Clubs présidés par l'utilisateur SANS aucun successeur éligible.
+    // Purement informatif dans la modale : ces clubs passeront automatiquement
+    // à president_id = NULL au moment du bannissement (voir submitUserBan()).
+    // [club_id => club_name]
+    public array $clubsWithoutSuccessor = [];
+
+    // [club_id => id du candidat choisi] (uniquement pour les clubs de $clubsNeedingSuccessor)
     public array $selectedSuccessors = [];
 
     public function confirmClubDeletion(int $clubId): void
@@ -67,10 +68,13 @@ class Dashboard extends Component
     }
 
     /**
-     * Point d'entrée du bouton "Suspendre" / "Réactiver". Décide quel
-     * scénario s'applique : réactivation simple, bannissement simple,
-     * bannissement bloqué, ou bannissement nécessitant un transfert
-     * de présidence.
+     * Point d'entrée du bouton "Suspendre" / "Réactiver".
+     *
+     * Règle : le bannissement n'est JAMAIS bloqué par l'état des clubs de
+     * l'utilisateur. Si l'utilisateur est président d'au moins un club, on
+     * ouvre une modale récapitulative (choix des successeurs pour les clubs
+     * qui en ont, information pour ceux qui n'en ont pas), mais la validation
+     * de cette modale bannit l'utilisateur immédiatement dans tous les cas.
      */
     public function confirmUserBanToggle(int $userId): void
     {
@@ -87,24 +91,23 @@ class Dashboard extends Component
             return;
         }
 
-        // Bannissement : on vérifie d'abord si l'utilisateur est président
-        // d'un ou plusieurs clubs (soft-deleted exclus automatiquement).
         $clubsAsPresident = $user->clubs()->get();
 
+        // Pas président d'un club : bannissement simple, comme avant.
         if ($clubsAsPresident->isEmpty()) {
             $this->confirmingUserBanToggle = $userId;
 
             return;
         }
 
-        $blocking = [];
         $needingSuccessor = [];
+        $withoutSuccessor = [];
 
         foreach ($clubsAsPresident as $club) {
             $candidates = $this->eligibleSuccessors($club, $user);
 
             if ($candidates->isEmpty()) {
-                $blocking[] = $club->name;
+                $withoutSuccessor[$club->id] = $club->name;
             } else {
                 $needingSuccessor[$club->id] = [
                     'club_name' => $club->name,
@@ -113,15 +116,9 @@ class Dashboard extends Component
             }
         }
 
-        if (! empty($blocking)) {
-            $this->blockedBanUserId = $userId;
-            $this->blockingClubs = $blocking;
-
-            return;
-        }
-
         $this->selectingSuccessorUserId = $userId;
         $this->clubsNeedingSuccessor = $needingSuccessor;
+        $this->clubsWithoutSuccessor = $withoutSuccessor;
         $this->selectedSuccessors = [];
     }
 
@@ -130,16 +127,11 @@ class Dashboard extends Component
         $this->confirmingUserBanToggle = null;
     }
 
-    public function cancelBlockedBan(): void
-    {
-        $this->blockedBanUserId = null;
-        $this->blockingClubs = [];
-    }
-
     public function cancelSuccessorSelection(): void
     {
         $this->selectingSuccessorUserId = null;
         $this->clubsNeedingSuccessor = [];
+        $this->clubsWithoutSuccessor = [];
         $this->selectedSuccessors = [];
     }
 
@@ -173,12 +165,16 @@ class Dashboard extends Component
     }
 
     /**
-     * Envoie une proposition de transfert de présidence pour chaque club
-     * concerné. Le bannissement effectif n'est PAS appliqué ici : il ne
-     * le sera qu'une fois tous les transferts acceptés par les candidats
-     * (logique à venir dans l'interface d'acceptation du successeur).
+     * Bannit immédiatement l'utilisateur, quel que soit l'état de ses clubs :
+     * - Pour les clubs AVEC successeur choisi : crée une demande de transfert
+     *   de présidence (pending). Le club garde son president_id actuel (qui
+     *   pointe vers l'utilisateur banni, donc plus personne ne peut le gérer)
+     *   jusqu'à ce que le successeur accepte (Étape D, à venir) ou qu'un admin
+     *   intervienne manuellement.
+     * - Pour les clubs SANS successeur : passent directement à
+     *   president_id = NULL, en attente d'intervention administrative.
      */
-    public function submitSuccessorProposals(): void
+    public function submitUserBan(): void
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
@@ -203,15 +199,25 @@ class Dashboard extends Component
             ]);
         }
 
-        $clubNames = collect($this->clubsNeedingSuccessor)->pluck('club_name')->join(', ');
+        foreach (array_keys($this->clubsWithoutSuccessor) as $clubId) {
+            Club::where('id', $clubId)->update(['president_id' => null]);
+        }
+
+        $user->is_banned = true;
+        $user->save();
+
+        $clubNames = collect($this->clubsNeedingSuccessor)->pluck('club_name')
+            ->merge(collect($this->clubsWithoutSuccessor)->values())
+            ->join(', ');
 
         $this->cancelSuccessorSelection();
 
         session()->flash(
             'success',
-            "Proposition(s) de transfert de présidence envoyée(s) pour : {$clubNames}. "
-                . "L'utilisateur « {$user->name} » sera suspendu automatiquement dès que le(s) "
-                . 'candidat(s) auront accepté.'
+            "L'utilisateur « {$user->name} » a été suspendu. "
+                . ($clubNames
+                    ? "Club(s) concerné(s) : {$clubNames}. Les clubs sans successeur disponible sont désormais sans président et nécessitent une intervention administrative."
+                    : '')
         );
     }
 

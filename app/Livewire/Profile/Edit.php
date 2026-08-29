@@ -57,13 +57,18 @@ class Edit extends Component
     // --- Section : suppression de compte ---
     public string $delete_password = '';
 
-    // Noms des clubs qui bloquent la suppression (aucun successeur éligible).
-    public array $blockingClubsForDeletion = [];
-
+    // Clubs présidés par l'utilisateur AVEC au moins un successeur éligible.
     // [club_id => ['club_name' => string, 'candidates' => Collection<User>]]
     public array $clubsNeedingSuccessorForDeletion = [];
 
-    // [club_id => id du candidat choisi]
+    // Clubs présidés par l'utilisateur SANS aucun successeur éligible.
+    // Purement informatif dans la modale : ces clubs passeront automatiquement
+    // à president_id = NULL au moment de la suppression du compte (voir
+    // submitAccountDeletion()).
+    // [club_id => club_name]
+    public array $clubsWithoutSuccessorForDeletion = [];
+
+    // [club_id => id du candidat choisi] (uniquement pour les clubs de $clubsNeedingSuccessorForDeletion)
     public array $selectedSuccessorsForDeletion = [];
 
     /**
@@ -297,13 +302,16 @@ class Edit extends Component
     /**
      * Point d'entrée du formulaire de suppression de compte.
      *
-     * - Utilisateur président d'aucun club : suppression immédiate (inchangé).
-     * - Président avec successeur éligible dans TOUS ses clubs : ferme la
-     *   modale de confirmation simple et ouvre la modale de sélection du/des
-     *   successeur(s). La suppression réelle est différée (Étape D).
-     * - Président d'au moins un club SANS successeur éligible : bloque
-     *   entièrement la suppression (même logique "tout ou rien" que
-     *   l'Étape B côté admin) et ouvre la modale d'explication.
+     * Règle : la suppression du compte ne bloque JAMAIS, quel que soit
+     * l'état des clubs présidés par l'utilisateur (même règle que côté
+     * admin dans Admin\Dashboard::confirmUserBanToggle()).
+     *
+     * - Pas président d'un club : suppression immédiate (inchangé).
+     * - Président d'au moins un club : ferme la modale de mot de passe et
+     *   ouvre la modale récapitulative (choix de successeur pour les clubs
+     *   qui en ont, information pour ceux qui n'en ont pas). La suppression
+     *   réelle n'a lieu qu'à la validation de cette modale, dans
+     *   submitAccountDeletion().
      */
     public function deleteUser(Logout $logout): void
     {
@@ -324,14 +332,14 @@ class Edit extends Component
             return;
         }
 
-        $blocking = [];
         $needingSuccessor = [];
+        $withoutSuccessor = [];
 
         foreach ($clubsAsPresident as $club) {
             $candidates = $this->eligibleSuccessors($club, $user);
 
             if ($candidates->isEmpty()) {
-                $blocking[] = $club->name;
+                $withoutSuccessor[$club->id] = $club->name;
             } else {
                 $needingSuccessor[$club->id] = [
                     'club_name' => $club->name,
@@ -340,33 +348,18 @@ class Edit extends Component
             }
         }
 
-        if (! empty($blocking)) {
-            $this->blockingClubsForDeletion = $blocking;
-
-            $this->dispatch('close-modal', 'confirm-user-deletion');
-            $this->dispatch('open-modal', 'account-deletion-blocked');
-
-            return;
-        }
-
         $this->clubsNeedingSuccessorForDeletion = $needingSuccessor;
+        $this->clubsWithoutSuccessorForDeletion = $withoutSuccessor;
         $this->selectedSuccessorsForDeletion = [];
 
         $this->dispatch('close-modal', 'confirm-user-deletion');
         $this->dispatch('open-modal', 'account-deletion-successor');
     }
 
-    public function cancelBlockedDeletion(): void
-    {
-        $this->blockingClubsForDeletion = [];
-        $this->reset('delete_password');
-
-        $this->dispatch('close-modal', 'account-deletion-blocked');
-    }
-
     public function cancelAccountDeletionSuccessorSelection(): void
     {
         $this->clubsNeedingSuccessorForDeletion = [];
+        $this->clubsWithoutSuccessorForDeletion = [];
         $this->selectedSuccessorsForDeletion = [];
         $this->reset('delete_password');
 
@@ -374,12 +367,18 @@ class Edit extends Component
     }
 
     /**
-     * Crée une proposition de transfert de présidence pour CHAQUE club
-     * concerné. Le compte n'est PAS supprimé ici : il ne le sera qu'une
-     * fois tous les transferts acceptés par les successeurs choisis
-     * (logique à venir en Étape D).
+     * Supprime immédiatement le compte, quel que soit l'état des clubs :
+     * - Pour les clubs AVEC successeur choisi : crée une demande de transfert
+     *   de présidence (pending). Le successeur pourra l'accepter ou la
+     *   refuser plus tard (Étape D, à venir) ; ça n'empêche pas la
+     *   suppression du compte de se faire maintenant.
+     * - Pour les clubs SANS successeur : passent directement à
+     *   president_id = NULL, en attente d'intervention administrative.
+     *
+     * Logique jumelle de Admin\Dashboard::submitUserBan(), avec suppression
+     * + déconnexion réelle au lieu d'un bannissement.
      */
-    public function submitAccountDeletionSuccessor(): void
+    public function submitAccountDeletion(Logout $logout): void
     {
         $user = Auth::user();
 
@@ -400,15 +399,13 @@ class Edit extends Component
             ]);
         }
 
-        $clubNames = collect($this->clubsNeedingSuccessorForDeletion)->pluck('club_name')->join(', ');
+        foreach (array_keys($this->clubsWithoutSuccessorForDeletion) as $clubId) {
+            Club::where('id', $clubId)->update(['president_id' => null]);
+        }
 
-        $this->cancelAccountDeletionSuccessorSelection();
+        tap($user, $logout(...))->delete();
 
-        session()->flash(
-            'success',
-            "Ta demande de suppression de compte a été enregistrée pour : {$clubNames}. "
-                . 'Ton compte sera supprimé automatiquement dès que le(s) successeur(s) choisi(s) auront accepté la présidence.'
-        );
+        $this->redirect('/', navigate: false);
     }
 
     /**

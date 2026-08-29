@@ -191,7 +191,7 @@
         </div>
     @endif
 
-    <!-- Modale de confirmation bannissement/réactivation simple -->
+    <!-- Modale de confirmation bannissement/réactivation simple (pas président) -->
     @if ($confirmingUserBanToggle)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-user-{{ $confirmingUserBanToggle }}">
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
@@ -215,66 +215,57 @@
         </div>
     @endif
 
-    <!-- Modale : bannissement bloqué (au moins un club sans successeur éligible) -->
-    @if ($blockedBanUserId)
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-blocked-{{ $blockedBanUserId }}">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">🚫 Suspension impossible pour le moment</h3>
-                <p class="text-gray-600 text-sm mb-3">
-                    Cet utilisateur est président du/des club(s) suivant(s), qui n'ont
-                    aucun autre membre éligible (adhésion acceptée + profil complété)
-                    pour reprendre la présidence :
-                </p>
-                <ul class="list-disc list-inside text-sm text-gray-700 mb-4">
-                    @foreach ($blockingClubs as $clubName)
-                        <li>{{ $clubName }}</li>
-                    @endforeach
-                </ul>
-                <p class="text-gray-600 text-sm mb-6">
-                    Pour suspendre cet utilisateur, supprime d'abord le(s) club(s)
-                    concerné(s) depuis la section « Gestion des clubs » ci-dessus.
-                </p>
-                <div class="flex justify-end">
-                    <button
-                        wire:click="cancelBlockedBan"
-                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
-                        Fermer
-                    </button>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <!-- Modale : sélection du/des successeur(s) avant bannissement -->
+    <!-- Modale : suspension d'un président de club (successeurs à choisir / clubs sans successeur) -->
     @if ($selectingSuccessorUserId)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-succession-{{ $selectingSuccessorUserId }}">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">👑 Choisir le(s) successeur(s)</h3>
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">👑 Suspension d'un président de club</h3>
                 <p class="text-gray-600 text-sm mb-4">
-                    Cet utilisateur est président du/des club(s) ci-dessous. Choisis un
-                    successeur pour chacun : la suspension ne sera effective qu'une
-                    fois que le(s) successeur(s) auront accepté.
+                    Cet utilisateur sera <strong>suspendu immédiatement</strong> après
+                    validation. Pour les clubs ci-dessous où un successeur est
+                    disponible, une demande de transfert de présidence lui sera
+                    envoyée (le club reste actif en attendant sa réponse). Pour les
+                    clubs sans successeur disponible, le club sera immédiatement sans
+                    président et nécessitera une intervention administrative.
                 </p>
 
-                <div class="space-y-4 mb-6">
-                    @foreach ($clubsNeedingSuccessor as $clubId => $data)
-                        <div class="border rounded-md p-3">
-                            <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
-                            <div class="space-y-1">
-                                @foreach ($data['candidates'] as $candidate)
-                                    <label class="flex items-center gap-2 text-sm text-gray-700">
-                                        <input
-                                            type="radio"
-                                            wire:model="selectedSuccessors.{{ $clubId }}"
-                                            value="{{ $candidate->id }}"
-                                        >
-                                        {{ $candidate->name }}
-                                    </label>
-                                @endforeach
+                @if (count($clubsNeedingSuccessor) > 0)
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        Clubs avec successeur à choisir :
+                    </p>
+                    <div class="space-y-4 mb-6">
+                        @foreach ($clubsNeedingSuccessor as $clubId => $data)
+                            <div class="border rounded-md p-3">
+                                <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
+                                <div class="space-y-1">
+                                    @foreach ($data['candidates'] as $candidate)
+                                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                                            <input
+                                                type="radio"
+                                                wire:model="selectedSuccessors.{{ $clubId }}"
+                                                value="{{ $candidate->id }}"
+                                            >
+                                            {{ $candidate->name }}
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if (count($clubsWithoutSuccessor) > 0)
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        Clubs sans successeur disponible (passeront sans président) :
+                    </p>
+                    <div class="mb-6">
+                        <ul class="list-disc list-inside text-sm text-gray-600 bg-gray-50 border rounded-md p-3">
+                            @foreach ($clubsWithoutSuccessor as $clubName)
+                                <li>{{ $clubName }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <div class="flex justify-end gap-3">
                     <button
@@ -283,9 +274,9 @@
                         Annuler
                     </button>
                     <button
-                        wire:click="submitSuccessorProposals"
-                        class="px-4 py-2 text-sm rounded-md bg-purple-600 text-white hover:bg-purple-700">
-                        Proposer le(s) transfert(s)
+                        wire:click="submitUserBan"
+                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
+                        ⛔ Confirmer la suspension
                     </button>
                 </div>
             </div>

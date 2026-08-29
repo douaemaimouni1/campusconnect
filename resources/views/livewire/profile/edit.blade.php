@@ -273,68 +273,58 @@
                     </form>
                 </x-modal>
 
-                {{-- Modale : suppression bloquée (aucun successeur éligible pour au moins un club) --}}
-                <x-modal name="account-deletion-blocked" focusable>
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            🚫 {{ __('Suppression impossible pour le moment') }}
-                        </h3>
-
-                        <p class="mt-2 text-sm text-gray-600">
-                            {{ __("Tu es président du/des club(s) suivant(s), qui n'ont aucun autre membre éligible (adhésion acceptée, profil complété et compte non banni) pour reprendre la présidence :") }}
-                        </p>
-
-                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 mb-2">
-                            @foreach ($blockingClubsForDeletion as $clubName)
-                                <li>{{ $clubName }}</li>
-                            @endforeach
-                        </ul>
-
-                        <p class="mt-2 text-sm text-gray-600">
-                            {{ __("Pour supprimer ton compte, un administrateur doit d'abord intervenir sur ce(s) club(s) (ajouter un membre éligible ou le(s) supprimer).") }}
-                        </p>
-
-                        <div class="mt-6 flex justify-end">
-                            <x-secondary-button
-                                wire:click="cancelBlockedDeletion"
-                                x-on:click="$dispatch('close')"
-                            >
-                                {{ __('Fermer') }}
-                            </x-secondary-button>
-                        </div>
-                    </div>
-                </x-modal>
-
-                {{-- Modale : choix du/des successeur(s) avant suppression du compte --}}
+                {{-- Modale : suppression d'un compte président de club (successeurs à choisir / clubs sans successeur) --}}
                 <x-modal name="account-deletion-successor" focusable>
                     <div class="p-6">
                         <h3 class="text-lg font-medium text-gray-900">
-                            👤 {{ __('Choisir ton/tes successeur(s)') }}
+                            👤 {{ __('Suppression de ton compte de président') }}
                         </h3>
 
                         <p class="mt-2 text-sm text-gray-600">
-                            {{ __('Tu es président du/des club(s) ci-dessous. Choisis un successeur pour chacun : ton compte sera supprimé automatiquement dès que le(s) successeur(s) auront accepté.') }}
+                            {{ __('Ton compte va être supprimé immédiatement après validation.') }}
                         </p>
 
-                        <div class="mt-4 space-y-4">
-                            @foreach ($clubsNeedingSuccessorForDeletion as $clubId => $data)
-                                <div class="border rounded-md p-3">
-                                    <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
-                                    <div class="space-y-1">
-                                        @foreach ($data['candidates'] as $candidate)
-                                            <label class="flex items-center gap-2 text-sm text-gray-700">
-                                                <input
-                                                    type="radio"
-                                                    wire:model="selectedSuccessorsForDeletion.{{ $clubId }}"
-                                                    value="{{ $candidate->id }}"
-                                                >
-                                                {{ $candidate->name }}
-                                            </label>
-                                        @endforeach
+                        @if (count($clubsNeedingSuccessorForDeletion) > 0)
+                            <p class="text-sm font-medium text-gray-700 mt-4 mb-1">
+                                {{ __('Clubs avec successeur à choisir :') }}
+                            </p>
+                            <p class="text-sm text-gray-600 mb-2">
+                                {{ __('Choisis un successeur pour chacun : une demande de transfert de présidence lui sera envoyée (le club reste actif en attendant sa réponse).') }}
+                            </p>
+                            <div class="space-y-4">
+                                @foreach ($clubsNeedingSuccessorForDeletion as $clubId => $data)
+                                    <div class="border rounded-md p-3">
+                                        <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
+                                        <div class="space-y-1">
+                                            @foreach ($data['candidates'] as $candidate)
+                                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                    <input
+                                                        type="radio"
+                                                        wire:model="selectedSuccessorsForDeletion.{{ $clubId }}"
+                                                        value="{{ $candidate->id }}"
+                                                    >
+                                                    {{ $candidate->name }}
+                                                </label>
+                                            @endforeach
+                                        </div>
                                     </div>
-                                </div>
-                            @endforeach
-                        </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if (count($clubsWithoutSuccessorForDeletion) > 0)
+                            <p class="text-sm font-medium text-gray-700 mt-4 mb-1">
+                                {{ __('Clubs sans successeur disponible :') }}
+                            </p>
+                            <p class="text-sm text-gray-600 mb-2">
+                                {{ __('Ces clubs seront immédiatement sans président et nécessiteront une intervention administrative.') }}
+                            </p>
+                            <ul class="list-disc list-inside text-sm text-gray-600 bg-gray-50 border rounded-md p-3">
+                                @foreach ($clubsWithoutSuccessorForDeletion as $clubName)
+                                    <li>{{ $clubName }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
 
                         <div class="mt-6 flex justify-end gap-3">
                             <x-secondary-button
@@ -344,12 +334,12 @@
                                 {{ __('Annuler') }}
                             </x-secondary-button>
 
-                            <x-primary-button
-                                wire:click="submitAccountDeletionSuccessor"
+                            <x-danger-button
+                                wire:click="submitAccountDeletion"
                                 class="ms-3"
                             >
-                                {{ __('Proposer le(s) transfert(s)') }}
-                            </x-primary-button>
+                                {{ __('Confirmer la suppression') }}
+                            </x-danger-button>
                         </div>
                     </div>
                 </x-modal>
