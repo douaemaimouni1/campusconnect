@@ -85,13 +85,47 @@
 
                 <div>
                     <x-input-label for="email" :value="__('Email')" />
-                    <x-text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full" required autocomplete="username" />
+                    <x-text-input wire:model="email" id="email" name="email" type="email" class="mt-1 block w-full" required autocomplete="username" :disabled="(bool) $pendingEmail" />
                     <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
-                    @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
+                    @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail() && ! $pendingEmail)
                         <p class="text-sm mt-2 text-gray-800">
                             {{ __('Ton adresse email n\'est pas vérifiée.') }}
                         </p>
+                    @endif
+
+                    @if ($pendingEmail)
+                        <div wire:key="email-verification-box" class="mt-3 p-4 border border-indigo-200 bg-indigo-50 rounded-md">
+                            <p class="text-sm text-gray-700 mb-3">
+                                {{ __('Un code à 6 chiffres a été envoyé à') }} <strong>{{ $pendingEmail }}</strong>.
+                                {{ __('Saisis-le pour confirmer ce nouvel email.') }}
+                            </p>
+
+                            <x-input-label for="email_verification_code" :value="__('Code de vérification')" />
+                            <x-text-input
+                                wire:model="email_verification_code"
+                                id="email_verification_code"
+                                type="text"
+                                inputmode="numeric"
+                                maxlength="6"
+                                class="mt-1 block w-full max-w-xs text-center tracking-[0.5em] text-xl"
+                            />
+                            <x-input-error class="mt-2" :messages="$errors->get('email_verification_code')" />
+
+                            <div class="flex items-center gap-4 mt-3">
+                                <x-secondary-button type="button" wire:click="verifyEmailChangeCode">
+                                    {{ __('Vérifier') }}
+                                </x-secondary-button>
+
+                                <button type="button" wire:click="resendEmailChangeCode" class="text-sm text-indigo-600 hover:text-indigo-800 underline">
+                                    {{ __('Renvoyer le code') }}
+                                </button>
+
+                                <button type="button" wire:click="cancelEmailChange" class="text-sm text-gray-500 hover:text-gray-700 underline">
+                                    {{ __('Annuler') }}
+                                </button>
+                            </div>
+                        </div>
                     @endif
                 </div>
 
@@ -112,6 +146,10 @@
 
                     <x-action-message class="me-3" on="profile-updated">
                         {{ __('Enregistré.') }}
+                    </x-action-message>
+
+                    <x-action-message class="me-3" on="email-updated">
+                        {{ __('Email mis à jour.') }}
                     </x-action-message>
                 </div>
             </form>
@@ -212,6 +250,87 @@
                             </x-danger-button>
                         </div>
                     </form>
+                </x-modal>
+
+                {{-- Modale : suppression bloquée (aucun successeur éligible pour au moins un club) --}}
+                <x-modal name="account-deletion-blocked" focusable>
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            🚫 {{ __('Suppression impossible pour le moment') }}
+                        </h3>
+
+                        <p class="mt-2 text-sm text-gray-600">
+                            {{ __("Tu es président du/des club(s) suivant(s), qui n'ont aucun autre membre éligible (adhésion acceptée, profil complété et compte non banni) pour reprendre la présidence :") }}
+                        </p>
+
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 mb-2">
+                            @foreach ($blockingClubsForDeletion as $clubName)
+                                <li>{{ $clubName }}</li>
+                            @endforeach
+                        </ul>
+
+                        <p class="mt-2 text-sm text-gray-600">
+                            {{ __("Pour supprimer ton compte, un administrateur doit d'abord intervenir sur ce(s) club(s) (ajouter un membre éligible ou le(s) supprimer).") }}
+                        </p>
+
+                        <div class="mt-6 flex justify-end">
+                            <x-secondary-button
+                                wire:click="cancelBlockedDeletion"
+                                x-on:click="$dispatch('close')"
+                            >
+                                {{ __('Fermer') }}
+                            </x-secondary-button>
+                        </div>
+                    </div>
+                </x-modal>
+
+                {{-- Modale : choix du/des successeur(s) avant suppression du compte --}}
+                <x-modal name="account-deletion-successor" focusable>
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            👤 {{ __('Choisir ton/tes successeur(s)') }}
+                        </h3>
+
+                        <p class="mt-2 text-sm text-gray-600">
+                            {{ __('Tu es président du/des club(s) ci-dessous. Choisis un successeur pour chacun : ton compte sera supprimé automatiquement dès que le(s) successeur(s) auront accepté.') }}
+                        </p>
+
+                        <div class="mt-4 space-y-4">
+                            @foreach ($clubsNeedingSuccessorForDeletion as $clubId => $data)
+                                <div class="border rounded-md p-3">
+                                    <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
+                                    <div class="space-y-1">
+                                        @foreach ($data['candidates'] as $candidate)
+                                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                <input
+                                                    type="radio"
+                                                    wire:model="selectedSuccessorsForDeletion.{{ $clubId }}"
+                                                    value="{{ $candidate->id }}"
+                                                >
+                                                {{ $candidate->name }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <x-secondary-button
+                                wire:click="cancelAccountDeletionSuccessorSelection"
+                                x-on:click="$dispatch('close')"
+                            >
+                                {{ __('Annuler') }}
+                            </x-secondary-button>
+
+                            <x-primary-button
+                                wire:click="submitAccountDeletionSuccessor"
+                                class="ms-3"
+                            >
+                                {{ __('Proposer le(s) transfert(s)') }}
+                            </x-primary-button>
+                        </div>
+                    </div>
                 </x-modal>
             </section>
 

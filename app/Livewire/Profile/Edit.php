@@ -3,10 +3,15 @@
 namespace App\Livewire\Profile;
 
 use App\Livewire\Actions\Logout;
+use App\Mail\VerificationCodeMail;
+use App\Models\Club;
+use App\Models\ClubPresidencyTransfer;
+use App\Models\EmailVerificationCode;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -29,6 +34,13 @@ class Edit extends Component
     // Nouvel avatar en attente d'upload (temporaire, pas encore sauvegardé)
     public $avatar = null;
 
+    // --- Section : changement d'email (vérification par code) ---
+    // Nouvel email en attente de confirmation (null tant qu'aucun changement n'est en cours).
+    public ?string $pendingEmail = null;
+
+    // Code à 6 chiffres saisi par l'utilisatrice pour confirmer le nouvel email.
+    public string $email_verification_code = '';
+
     // --- Section : mot de passe ---
     public string $current_password = '';
     public string $password = '';
@@ -36,6 +48,15 @@ class Edit extends Component
 
     // --- Section : suppression de compte ---
     public string $delete_password = '';
+
+    // Noms des clubs qui bloquent la suppression (aucun successeur éligible).
+    public array $blockingClubsForDeletion = [];
+
+    // [club_id => ['club_name' => string, 'candidates' => Collection<User>]]
+    public array $clubsNeedingSuccessorForDeletion = [];
+
+    // [club_id => id du candidat choisi]
+    public array $selectedSuccessorsForDeletion = [];
 
     /**
      * Pré-remplit le formulaire avec les données actuelles de l'utilisateur connecté.
@@ -51,7 +72,13 @@ class Edit extends Component
     }
 
     /**
-     * Met à jour les informations générales du profil (nom, email, département, bio, avatar).
+     * Met à jour les informations générales du profil (nom, département, bio, avatar).
+     *
+     * L'email est traité à part : s'il a changé, on ne l'enregistre PAS
+     * directement en base. On génère un code de vérification, on l'envoie
+     * au NOUVEL email, et on affiche un formulaire de saisie du code
+     * (voir verifyEmailChangeCode()). L'email réel n'est mis à jour que
+     * si le code saisi est correct.
      */
     public function updateProfileInformation(): void
     {
@@ -69,15 +96,6 @@ class Edit extends Component
         $user->department = $validated['department'];
         $user->bio = $validated['bio'];
 
-        // Si l'email change, on force une nouvelle vérification (comportement standard Breeze)
-        if ($validated['email'] !== $user->email) {
-            $user->email = $validated['email'];
-
-            if ($user instanceof MustVerifyEmail) {
-                $user->email_verified_at = null;
-            }
-        }
-
         // Upload du nouvel avatar : on supprime l'ancien fichier avant d'enregistrer le nouveau
         if ($this->avatar) {
             if ($user->avatar) {
@@ -92,9 +110,119 @@ class Edit extends Component
         // On vide le champ d'upload temporaire après sauvegarde
         $this->avatar = null;
 
+        // Si l'email n'a pas changé, on s'arrête là : rien à vérifier.
+        if ($validated['email'] === $user->email) {
+            $this->dispatch('profile-updated');
+
+            return;
+        }
+
+        // L'email a changé : on lance la vérification, on n'enregistre rien
+        // sur le champ email de $user pour l'instant.
+        $this->pendingEmail = $validated['email'];
+        $this->email_verification_code = '';
+
+        $code = EmailVerificationCode::generateFor($user, $this->pendingEmail, 'profile_change');
+
+        Mail::to($this->pendingEmail)->send(new VerificationCodeMail($code->code));
+
         $this->dispatch('profile-updated');
     }
 
+    /**
+     * Vérifie le code saisi pour confirmer le changement d'email. Si le
+     * code est correct, met enfin à jour l'email réel de l'utilisatrice.
+     */
+    public function verifyEmailChangeCode(): void
+    {
+        $user = Auth::user();
+
+        $code = EmailVerificationCode::activeFor($user, 'profile_change');
+
+        if (! $code) {
+            $this->pendingEmail = null;
+
+            throw ValidationException::withMessages([
+                'email_verification_code' => 'Cette demande a expiré, merci de recommencer le changement d\'email.',
+            ]);
+        }
+
+        $result = $code->attempt($this->email_verification_code);
+
+        if ($result === 'blocked') {
+            throw ValidationException::withMessages([
+                'email_verification_code' => 'Trop de tentatives incorrectes. Réessaie dans quelques minutes.',
+            ]);
+        }
+
+        if ($result === 'expired') {
+            throw ValidationException::withMessages([
+                'email_verification_code' => 'Ce code a expiré. Clique sur "Renvoyer le code".',
+            ]);
+        }
+
+        if ($result === 'invalid') {
+            throw ValidationException::withMessages([
+                'email_verification_code' => 'Code incorrect.',
+            ]);
+        }
+
+        // Code correct : on met enfin à jour l'email réel.
+        $user->email = $code->email;
+
+        if ($user instanceof MustVerifyEmail) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        $code->delete();
+
+        $this->pendingEmail = null;
+        $this->email = $user->email;
+        $this->email_verification_code = '';
+
+        $this->dispatch('email-updated');
+    }
+
+    /**
+     * Renvoie un nouveau code pour le changement d'email en cours
+     * (avec délai anti-spam de 60 secondes, géré par le modèle).
+     */
+    public function resendEmailChangeCode(): void
+    {
+        $user = Auth::user();
+
+        if (! $this->pendingEmail) {
+            return;
+        }
+
+        if (! EmailVerificationCode::canResend($user, 'profile_change')) {
+            throw ValidationException::withMessages([
+                'email_verification_code' => 'Merci de patienter avant de redemander un code.',
+            ]);
+        }
+
+        $code = EmailVerificationCode::generateFor($user, $this->pendingEmail, 'profile_change');
+
+        Mail::to($this->pendingEmail)->send(new VerificationCodeMail($code->code));
+    }
+
+    /**
+     * Annule le changement d'email en cours : l'email réel reste inchangé.
+     */
+    public function cancelEmailChange(): void
+    {
+        $user = Auth::user();
+
+        EmailVerificationCode::where('user_id', $user->id)
+            ->where('purpose', 'profile_change')
+            ->delete();
+
+        $this->pendingEmail = null;
+        $this->email_verification_code = '';
+        $this->email = $user->email;
+    }
 
     public function deleteAvatar(): void
     {
@@ -131,16 +259,140 @@ class Edit extends Component
         $this->dispatch('password-updated');
     }
 
-
+    /**
+     * Point d'entrée du formulaire de suppression de compte.
+     *
+     * - Utilisateur président d'aucun club : suppression immédiate (inchangé).
+     * - Président avec successeur éligible dans TOUS ses clubs : ferme la
+     *   modale de confirmation simple et ouvre la modale de sélection du/des
+     *   successeur(s). La suppression réelle est différée (Étape D).
+     * - Président d'au moins un club SANS successeur éligible : bloque
+     *   entièrement la suppression (même logique "tout ou rien" que
+     *   l'Étape B côté admin) et ouvre la modale d'explication.
+     */
     public function deleteUser(Logout $logout): void
     {
         $this->validate([
             'delete_password' => ['required', 'string', 'current_password'],
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
 
-        $this->redirect('/', navigate: false);
+        $clubsAsPresident = $user->clubs()->get();
+
+        // Pas président d'un club : suppression immédiate, comme avant.
+        if ($clubsAsPresident->isEmpty()) {
+            tap($user, $logout(...))->delete();
+
+            $this->redirect('/', navigate: false);
+
+            return;
+        }
+
+        $blocking = [];
+        $needingSuccessor = [];
+
+        foreach ($clubsAsPresident as $club) {
+            $candidates = $this->eligibleSuccessors($club, $user);
+
+            if ($candidates->isEmpty()) {
+                $blocking[] = $club->name;
+            } else {
+                $needingSuccessor[$club->id] = [
+                    'club_name' => $club->name,
+                    'candidates' => $candidates,
+                ];
+            }
+        }
+
+        if (! empty($blocking)) {
+            $this->blockingClubsForDeletion = $blocking;
+
+            $this->dispatch('close-modal', 'confirm-user-deletion');
+            $this->dispatch('open-modal', 'account-deletion-blocked');
+
+            return;
+        }
+
+        $this->clubsNeedingSuccessorForDeletion = $needingSuccessor;
+        $this->selectedSuccessorsForDeletion = [];
+
+        $this->dispatch('close-modal', 'confirm-user-deletion');
+        $this->dispatch('open-modal', 'account-deletion-successor');
+    }
+
+    public function cancelBlockedDeletion(): void
+    {
+        $this->blockingClubsForDeletion = [];
+        $this->reset('delete_password');
+
+        $this->dispatch('close-modal', 'account-deletion-blocked');
+    }
+
+    public function cancelAccountDeletionSuccessorSelection(): void
+    {
+        $this->clubsNeedingSuccessorForDeletion = [];
+        $this->selectedSuccessorsForDeletion = [];
+        $this->reset('delete_password');
+
+        $this->dispatch('close-modal', 'account-deletion-successor');
+    }
+
+    /**
+     * Crée une proposition de transfert de présidence pour CHAQUE club
+     * concerné. Le compte n'est PAS supprimé ici : il ne le sera qu'une
+     * fois tous les transferts acceptés par les successeurs choisis
+     * (logique à venir en Étape D).
+     */
+    public function submitAccountDeletionSuccessor(): void
+    {
+        $user = Auth::user();
+
+        foreach ($this->clubsNeedingSuccessorForDeletion as $clubId => $data) {
+            $selectedId = $this->selectedSuccessorsForDeletion[$clubId] ?? null;
+
+            $validIds = $data['candidates']->pluck('id')->all();
+
+            abort_if(! $selectedId || ! in_array((int) $selectedId, $validIds, true), 422);
+
+            ClubPresidencyTransfer::create([
+                'club_id' => $clubId,
+                'current_president_id' => $user->id,
+                'proposed_president_id' => $selectedId,
+                'status' => 'pending',
+                'initiated_by' => 'self',
+                'reason' => 'account_deletion',
+            ]);
+        }
+
+        $clubNames = collect($this->clubsNeedingSuccessorForDeletion)->pluck('club_name')->join(', ');
+
+        $this->cancelAccountDeletionSuccessorSelection();
+
+        session()->flash(
+            'success',
+            "Ta demande de suppression de compte a été enregistrée pour : {$clubNames}. "
+                . 'Ton compte sera supprimé automatiquement dès que le(s) successeur(s) choisi(s) auront accepté la présidence.'
+        );
+    }
+
+    /**
+     * Retourne les membres éligibles pour devenir président d'un club :
+     * adhésion acceptée, profil complété, compte non banni, hors président actuel.
+     *
+     * Logique identique à Admin\Dashboard::eligibleSuccessors(), dupliquée ici
+     * volontairement car les deux composants restent indépendants.
+     */
+    private function eligibleSuccessors(Club $club, User $president)
+    {
+        return User::whereHas('clubMemberships', function ($query) use ($club) {
+                $query->where('club_id', $club->id)
+                    ->where('status', 'accepted');
+            })
+            ->where('id', '!=', $president->id)
+            ->where('profile_completed', true)
+            ->where('is_banned', false)
+            ->get();
     }
 
     public function render()
