@@ -64,7 +64,11 @@
 
             </div>
 
-            <!-- User Menu -->
+                        <!-- Notifications + User Menu -->
+            <div class="flex items-center gap-2">
+
+                <livewire:notifications.bell />
+
             <div class="hidden sm:flex sm:items-center">
 
                 <x-dropdown align="right" width="48">
@@ -98,7 +102,9 @@
 
                     </x-slot>
 
-                </x-dropdown>
+                                </x-dropdown>
+
+            </div>
 
             </div>
 

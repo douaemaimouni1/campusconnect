@@ -7,6 +7,10 @@ use App\Models\ClubMembership;
 use App\Models\ClubPost;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\User;
+use App\Notifications\ClubMembershipRequested;
+use App\Notifications\EventRegistrationRequested;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -64,6 +68,25 @@ class Show extends Component
             ->whereIn('status', ['pending', 'confirmed'])
             ->pluck('status', 'event_id')
             ->toArray();
+    }
+
+    /**
+     * Supprime, s'il existe, la notification déjà envoyée à $presidentId pour
+     * une demande donnée (adhésion ou participation). Utilisée quand
+     * l'utilisateur annule lui-même sa demande avant que le président ait pu
+     * répondre : la notification n'a alors plus lieu d'exister.
+     */
+    private function deleteRelatedNotification(string $type, string $dataKey, int $recordId, ?int $presidentId): void
+    {
+        if (! $presidentId) {
+            return;
+        }
+
+        DatabaseNotification::where('notifiable_type', User::class)
+            ->where('notifiable_id', $presidentId)
+            ->where('type', $type)
+            ->where('data->' . $dataKey, $recordId)
+            ->delete();
     }
 
     public function toggleMembersModal()
@@ -247,28 +270,51 @@ class Show extends Component
             ->delete();
     }
 
+    /**
+     * Envoie une demande d'adhésion, et notifie le président du club
+     * (s'il en a un : un club sans président n'a personne à notifier ici).
+     */
     public function joinClub()
     {
         if ($this->membershipStatus !== null) {
             return;
         }
 
-        ClubMembership::create([
+        $membership = ClubMembership::create([
             'user_id' => Auth::id(),
             'club_id' => $this->club->id,
             'status' => 'pending',
             'requested_at' => now(),
         ]);
 
+        if ($this->club->president_id) {
+            User::find($this->club->president_id)->notify(new ClubMembershipRequested($membership));
+        }
+
         $this->refreshStatuses();
     }
 
+    /**
+     * Annule une demande d'adhésion en attente : supprime la notification
+     * déjà envoyée au président (si elle existe encore), puis la demande.
+     */
     public function cancelMembership()
     {
-        ClubMembership::where('user_id', Auth::id())
+        $membership = ClubMembership::where('user_id', Auth::id())
             ->where('club_id', $this->club->id)
             ->where('status', 'pending')
-            ->delete();
+            ->first();
+
+        if ($membership) {
+            $this->deleteRelatedNotification(
+                ClubMembershipRequested::class,
+                'membership_id',
+                $membership->id,
+                $this->club->president_id,
+            );
+
+            $membership->delete();
+        }
 
         $this->refreshStatuses();
     }
@@ -285,6 +331,10 @@ class Show extends Component
 
     // --------- Inscription événements ---------
 
+    /**
+     * Inscription rapide à un événement du club (depuis la liste des posts).
+     * Notifie le président du club organisateur, s'il y en a un.
+     */
     public function joinEvent(int $eventId)
     {
         $alreadyExists = EventRegistration::where('user_id', Auth::id())
@@ -296,22 +346,45 @@ class Show extends Component
             return;
         }
 
-        EventRegistration::create([
+        $registration = EventRegistration::create([
             'user_id' => Auth::id(),
             'event_id' => $eventId,
             'status' => 'pending',
             'registered_at' => now(),
         ]);
 
+        if ($this->club->president_id) {
+            User::find($this->club->president_id)->notify(new EventRegistrationRequested($registration));
+        }
+
         $this->refreshStatuses();
     }
 
+    /**
+     * Annule une inscription à un événement (en attente ou déjà confirmée).
+     * Si elle était encore en attente, supprime aussi la notification déjà
+     * envoyée au président (sinon, elle a déjà été traitée/marquée lue par
+     * ailleurs, rien à nettoyer).
+     */
     public function cancelEventRegistration(int $eventId)
     {
-        EventRegistration::where('user_id', Auth::id())
+        $registration = EventRegistration::where('user_id', Auth::id())
             ->where('event_id', $eventId)
             ->whereIn('status', ['pending', 'confirmed'])
-            ->delete();
+            ->first();
+
+        if ($registration) {
+            if ($registration->status === 'pending') {
+                $this->deleteRelatedNotification(
+                    EventRegistrationRequested::class,
+                    'registration_id',
+                    $registration->id,
+                    $this->club->president_id,
+                );
+            }
+
+            $registration->delete();
+        }
 
         $this->refreshStatuses();
     }

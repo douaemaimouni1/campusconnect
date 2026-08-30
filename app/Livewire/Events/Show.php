@@ -2,6 +2,9 @@
 namespace App\Livewire\Events;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\User;
+use App\Notifications\EventRegistrationRequested;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -42,20 +45,49 @@ class Show extends Component
             return;
         }
 
-        EventRegistration::create([
+        $registration = EventRegistration::create([
             'user_id' => Auth::id(),
             'event_id' => $this->event->id,
             'status' => 'pending',
             'registered_at' => now(),
         ]);
+
+        $this->event->loadMissing('club');
+
+        if ($this->event->club->president_id) {
+            User::find($this->event->club->president_id)->notify(new EventRegistrationRequested($registration));
+        }
+
         $this->refreshStatus();
     }
+    /**
+     * Annule une inscription (en attente ou confirmée). Si elle était
+     * encore en attente, supprime aussi la notification déjà envoyée au
+     * président du club organisateur.
+     */
     public function cancelRegistration()
     {
-        EventRegistration::where('user_id', Auth::id())
+        $registration = EventRegistration::where('user_id', Auth::id())
             ->where('event_id', $this->event->id)
             ->whereIn('status', ['pending', 'confirmed'])
-            ->delete();
+            ->first();
+
+        if ($registration) {
+            if ($registration->status === 'pending') {
+                $this->event->loadMissing('club');
+
+                if ($this->event->club->president_id) {
+                    DatabaseNotification::where('notifiable_type', User::class)
+                        ->where('notifiable_id', $this->event->club->president_id)
+                        ->where('type', EventRegistrationRequested::class)
+                        ->where('data->registration_id', $registration->id)
+                        ->delete();
+                }
+            }
+
+            $registration->delete();
+        }
+
         $this->refreshStatus();
     }
     public function render()

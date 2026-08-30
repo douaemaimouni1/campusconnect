@@ -8,6 +8,7 @@ use App\Models\ClubPresidencyTransfer;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\User;
+use App\Notifications\ClubPresidencyTransferProposed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -167,10 +168,11 @@ class Dashboard extends Component
     /**
      * Bannit immédiatement l'utilisateur, quel que soit l'état de ses clubs :
      * - Pour les clubs AVEC successeur choisi : crée une demande de transfert
-     *   de présidence (pending). Le club garde son president_id actuel (qui
-     *   pointe vers l'utilisateur banni, donc plus personne ne peut le gérer)
-     *   jusqu'à ce que le successeur accepte (Étape D, à venir) ou qu'un admin
-     *   intervienne manuellement.
+     *   de présidence (pending) et notifie le successeur choisi. Le club
+     *   garde son president_id actuel (qui pointe vers l'utilisateur banni,
+     *   donc plus personne ne peut le gérer) jusqu'à ce que le successeur
+     *   accepte/refuse (voir Notifications\Bell) ou qu'un admin intervienne
+     *   manuellement.
      * - Pour les clubs SANS successeur : passent directement à
      *   president_id = NULL, en attente d'intervention administrative.
      */
@@ -189,7 +191,7 @@ class Dashboard extends Component
 
             abort_if(! $selectedId || ! in_array((int) $selectedId, $validIds, true), 422);
 
-            ClubPresidencyTransfer::create([
+            $transfer = ClubPresidencyTransfer::create([
                 'club_id' => $clubId,
                 'current_president_id' => $user->id,
                 'proposed_president_id' => $selectedId,
@@ -197,6 +199,8 @@ class Dashboard extends Component
                 'initiated_by' => 'admin',
                 'reason' => 'ban',
             ]);
+
+            User::find($selectedId)->notify(new ClubPresidencyTransferProposed($transfer));
         }
 
         foreach (array_keys($this->clubsWithoutSuccessor) as $clubId) {

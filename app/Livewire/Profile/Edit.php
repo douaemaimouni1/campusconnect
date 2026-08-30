@@ -8,6 +8,7 @@ use App\Models\Club;
 use App\Models\ClubPresidencyTransfer;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
+use App\Notifications\ClubPresidencyTransferProposed;
 use App\Support\DepartmentList;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
@@ -369,9 +370,9 @@ class Edit extends Component
     /**
      * Supprime immédiatement le compte, quel que soit l'état des clubs :
      * - Pour les clubs AVEC successeur choisi : crée une demande de transfert
-     *   de présidence (pending). Le successeur pourra l'accepter ou la
-     *   refuser plus tard (Étape D, à venir) ; ça n'empêche pas la
-     *   suppression du compte de se faire maintenant.
+     *   de présidence (pending) et notifie le successeur choisi. Il pourra
+     *   l'accepter ou la refuser plus tard (voir Notifications\Bell) ; ça
+     *   n'empêche pas la suppression du compte de se faire maintenant.
      * - Pour les clubs SANS successeur : passent directement à
      *   president_id = NULL, en attente d'intervention administrative.
      *
@@ -389,7 +390,7 @@ class Edit extends Component
 
             abort_if(! $selectedId || ! in_array((int) $selectedId, $validIds, true), 422);
 
-            ClubPresidencyTransfer::create([
+            $transfer = ClubPresidencyTransfer::create([
                 'club_id' => $clubId,
                 'current_president_id' => $user->id,
                 'proposed_president_id' => $selectedId,
@@ -397,6 +398,8 @@ class Edit extends Component
                 'initiated_by' => 'self',
                 'reason' => 'account_deletion',
             ]);
+
+            User::find($selectedId)->notify(new ClubPresidencyTransferProposed($transfer));
         }
 
         foreach (array_keys($this->clubsWithoutSuccessorForDeletion) as $clubId) {

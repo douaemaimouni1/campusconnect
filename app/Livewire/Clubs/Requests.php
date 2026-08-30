@@ -5,6 +5,8 @@ namespace App\Livewire\Clubs;
 use App\Models\Club;
 use App\Models\ClubMembership;
 use App\Models\EventRegistration;
+use App\Notifications\ClubMembershipResponded;
+use App\Notifications\EventRegistrationResponded;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -22,35 +24,57 @@ class Requests extends Component
     }
 
     /**
-     * Accepte une demande d'adhésion au club.
+     * Accepte une demande d'adhésion au club, et notifie le demandeur.
      */
     public function acceptMembership(int $membershipId)
     {
-        ClubMembership::where('id', $membershipId)
+        $membership = ClubMembership::where('id', $membershipId)
             ->where('club_id', $this->club->id)
-            ->update([
-                'status' => 'accepted',
-                'responded_at' => now(),
-            ]);
+            ->with('user')
+            ->first();
+
+        if (! $membership) {
+            return;
+        }
+
+        $membership->update([
+            'status' => 'accepted',
+            'responded_at' => now(),
+        ]);
+
+        $membership->user->notify(new ClubMembershipResponded($this->club, 'accepted'));
     }
 
     /**
      * Refuse une demande d'adhésion : suppression directe, pas de trace.
+     * On notifie le demandeur AVANT de supprimer, sinon on perdrait la
+     * référence à son compte.
      */
     public function rejectMembership(int $membershipId)
     {
-        ClubMembership::where('id', $membershipId)
+        $membership = ClubMembership::where('id', $membershipId)
             ->where('club_id', $this->club->id)
-            ->delete();
+            ->with('user')
+            ->first();
+
+        if (! $membership) {
+            return;
+        }
+
+        $user = $membership->user;
+
+        $membership->delete();
+
+        $user->notify(new ClubMembershipResponded($this->club, 'rejected'));
     }
 
     /**
-     * Accepte une demande de participation à un événement du club.
-     * Bloque si la capacité de l'événement est déjà atteinte : ne fait rien
-     * et affiche un message d'erreur, plutôt que de confirmer au-delà de la
-     * capacité (le bouton est aussi caché côté vue, mais cette vérification
-     * serveur reste indispensable, on ne fait jamais confiance uniquement à
-     * l'affichage).
+     * Accepte une demande de participation à un événement du club, et
+     * notifie le demandeur. Bloque si la capacité de l'événement est déjà
+     * atteinte : ne fait rien et affiche un message d'erreur, plutôt que de
+     * confirmer au-delà de la capacité (le bouton est aussi caché côté vue,
+     * mais cette vérification serveur reste indispensable, on ne fait
+     * jamais confiance uniquement à l'affichage).
      */
     public function acceptEventRegistration(int $registrationId)
     {
@@ -58,7 +82,7 @@ class Requests extends Component
             ->whereHas('event', function ($query) {
                 $query->where('club_id', $this->club->id);
             })
-            ->with('event')
+            ->with(['event', 'user'])
             ->first();
 
         if (! $registration) {
@@ -77,18 +101,33 @@ class Requests extends Component
         $registration->update([
             'status' => 'confirmed',
         ]);
+
+        $registration->user->notify(new EventRegistrationResponded($registration->event, 'confirmed'));
     }
 
     /**
-     * Refuse une demande de participation à un événement : suppression directe.
+     * Refuse une demande de participation à un événement : suppression
+     * directe. On notifie le demandeur AVANT de supprimer.
      */
     public function rejectEventRegistration(int $registrationId)
     {
-        EventRegistration::where('id', $registrationId)
+        $registration = EventRegistration::where('id', $registrationId)
             ->whereHas('event', function ($query) {
                 $query->where('club_id', $this->club->id);
             })
-            ->delete();
+            ->with(['event', 'user'])
+            ->first();
+
+        if (! $registration) {
+            return;
+        }
+
+        $user = $registration->user;
+        $event = $registration->event;
+
+        $registration->delete();
+
+        $user->notify(new EventRegistrationResponded($event, 'rejected'));
     }
 
     public function render()
