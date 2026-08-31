@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Event;
 use App\Models\ClubMembership;
 use App\Models\ClubPost;
-use App\Models\ClubGallery;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -43,11 +42,6 @@ class Club extends Model
         return $this->hasMany(ClubPost::class)->latest();
     }
 
-    public function gallery()
-    {
-        return $this->hasMany(ClubGallery::class)->latest();
-    }
-   
     public function presidencyTransfers()
     {
         return $this->hasMany(ClubPresidencyTransfer::class);
