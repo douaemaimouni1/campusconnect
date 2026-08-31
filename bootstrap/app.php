@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => \App\Http\Middleware\EnsureUserIsSuperAdmin::class,
             'not.banned' => \App\Http\Middleware\EnsureUserIsNotBanned::class,
         ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureUserIsNotBanned::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
