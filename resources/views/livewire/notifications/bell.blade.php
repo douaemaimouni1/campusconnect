@@ -138,6 +138,24 @@
                             <strong>{{ $notification->data['event_title'] }}</strong>
                             {{ $notification->data['status'] === 'confirmed' ? __('a été confirmée. 🎉') : __('a été refusée.') }}
                         </p>
+
+                    {{-- ===== Nouveau post publié dans un club dont je suis membre ===== --}}
+                    @elseif ($notification->type === \App\Notifications\ClubPostCreated::class)
+                        <p class="text-sm text-gray-800">
+                            <strong>{{ $notification->data['club_name'] }}</strong>
+                            {{ __('a publié :') }}
+                            <span class="text-gray-600">{{ $notification->data['content_preview'] }}</span>
+                        </p>
+
+                        @if ($notification->data['event_id'])
+                            <a href="{{ route('events.show', $notification->data['event_id']) }}" class="text-sm text-indigo-600 hover:text-indigo-800 underline mt-1 inline-block">
+                                {{ __('Voir l\'événement') }}
+                            </a>
+                        @else
+                            <a href="{{ route('clubs.show', $notification->data['club_id']) }}" class="text-sm text-indigo-600 hover:text-indigo-800 underline mt-1 inline-block">
+                                {{ __('Voir le club') }}
+                            </a>
+                        @endif
                     @endif
 
                     <p class="text-xs text-gray-400 mt-2">
