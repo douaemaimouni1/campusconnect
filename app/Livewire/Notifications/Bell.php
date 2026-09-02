@@ -71,6 +71,13 @@ class Bell extends Component
      *   ou toute autre voie), on ignore silencieusement la partie
      *   "changement de président" mais on marque quand même la notification
      *   comme lue, pour ne pas laisser une notification bloquée en boucle.
+     *
+     * En cas d'acceptation, on s'assure aussi que le nouveau président a
+     * bien une ClubMembership à status = accepted : pour les cas "ban" /
+     * "account_deletion", il l'était déjà (eligibleSuccessors() ne propose
+     * que des membres du club), mais pour le cas "vacant" (club orphelin),
+     * le candidat peut être n'importe quel utilisateur de la plateforme,
+     * potentiellement pas encore membre du tout.
      */
     private function respondToTransfer(string $notificationId, bool $accept): void
     {
@@ -87,6 +94,27 @@ class Bell extends Component
             $transfer->club()->update([
                 'president_id' => $accept ? $user->id : null,
             ]);
+
+            if ($accept) {
+                // Récupère la ClubMembership existante si elle existe, sinon
+                // prépare un nouvel objet non sauvegardé (firstOrNew ne
+                // touche pas la BDD tant qu'on n'appelle pas save()).
+                $membership = ClubMembership::firstOrNew([
+                    'user_id' => $user->id,
+                    'club_id' => $transfer->club_id,
+                ]);
+
+                // On ne renseigne requested_at que si c'est une toute
+                // nouvelle adhésion : pour un membre déjà existant, on ne
+                // veut pas écraser sa vraie date de demande d'adhésion.
+                if (! $membership->exists) {
+                    $membership->requested_at = now();
+                }
+
+                $membership->status = 'accepted';
+                $membership->responded_at = now();
+                $membership->save();
+            }
 
             $transfer->update([
                 'status' => $accept ? 'accepted' : 'declined',

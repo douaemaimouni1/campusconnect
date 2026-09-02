@@ -60,7 +60,18 @@
                     <tr wire:key="club-{{ $club->id }}">
                         <td class="px-5 py-3 font-medium text-gray-800">{{ $club->name }}</td>
                         <td class="px-5 py-3 text-gray-500">{{ $club->category }}</td>
-                        <td class="px-5 py-3 text-gray-500">{{ $club->president?->name ?? '—' }}</td>
+                        <td class="px-5 py-3 text-gray-500">
+                            @if ($club->president)
+                                {{ $club->president->name }}
+                            @else
+                                <span class="text-gray-400">—</span>
+                                <button
+                                    wire:click="openPresidentProposal({{ $club->id }})"
+                                    class="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                    👑 Proposer un président
+                                </button>
+                            @endif
+                        </td>
                         <td class="px-5 py-3 text-gray-500">{{ $club->members_count }}</td>
                         <td class="px-5 py-3 text-right">
                             <button
@@ -277,6 +288,55 @@
                         wire:click="submitUserBan"
                         class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
                         ⛔ Confirmer la suspension
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modale : proposition de président pour un club orphelin -->
+    @if ($proposingPresidentForClub)
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-propose-president-{{ $proposingPresidentForClub }}">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">👑 Proposer un président</h3>
+                <p class="text-gray-600 text-sm mb-4">
+                    Choisis un utilisateur actif de la plateforme (n'importe lequel,
+                    pas forcément membre du club). Il recevra une notification et
+                    devra <strong>accepter</strong> pour devenir président.
+                </p>
+
+                <input
+                    type="text"
+                    wire:model.live.debounce.300ms="presidentSearch"
+                    placeholder="Rechercher par nom ou email..."
+                    class="w-full border-gray-300 rounded-md text-sm mb-4 focus:border-indigo-500 focus:ring-indigo-500"
+                >
+
+                <div class="space-y-1 mb-6">
+                    @forelse ($presidentCandidates as $candidate)
+                        <div class="flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50" wire:key="candidate-{{ $candidate->id }}">
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">{{ $candidate->name }}</p>
+                                <p class="text-xs text-gray-500">{{ $candidate->email }}</p>
+                            </div>
+                            <button
+                                wire:click="proposePresident({{ $candidate->id }})"
+                                class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                Proposer
+                            </button>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-400 text-center py-4">
+                            Aucun utilisateur trouvé.
+                        </p>
+                    @endforelse
+                </div>
+
+                <div class="flex justify-end">
+                    <button
+                        wire:click="cancelPresidentProposal"
+                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
+                        Annuler
                     </button>
                 </div>
             </div>

@@ -9,6 +9,7 @@ use App\Models\ClubPresidencyTransfer;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use App\Notifications\ClubPresidencyTransferProposed;
+use App\Notifications\ClubPresidentAccountDeleted;
 use App\Support\DepartmentList;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
@@ -376,12 +377,22 @@ class Edit extends Component
      * - Pour les clubs SANS successeur : passent directement à
      *   president_id = NULL, en attente d'intervention administrative.
      *
+     * Dans les deux cas, les Super Admins sont notifiés immédiatement (et
+     * pas seulement plus tard, quand/si le successeur répond) : sans ça,
+     * un club pouvait rester sans président suivi par personne, surtout
+     * dans le cas "sans successeur" où aucune notification n'existait
+     * du tout avant cette modification.
+     *
      * Logique jumelle de Admin\Dashboard::submitUserBan(), avec suppression
-     * + déconnexion réelle au lieu d'un bannissement.
+     * + déconnexion réelle au lieu d'un bannissement. Note : la notification
+     * admin ajoutée ici ne concerne QUE la suppression de compte, pas le
+     * bannissement (décision actée avec l'utilisatrice).
      */
     public function submitAccountDeletion(Logout $logout): void
     {
         $user = Auth::user();
+
+        $admins = User::where('role', 'superAdmin')->get();
 
         foreach ($this->clubsNeedingSuccessorForDeletion as $clubId => $data) {
             $selectedId = $this->selectedSuccessorsForDeletion[$clubId] ?? null;
@@ -399,11 +410,32 @@ class Edit extends Component
                 'reason' => 'account_deletion',
             ]);
 
-            User::find($selectedId)->notify(new ClubPresidencyTransferProposed($transfer));
+            $successor = User::find($selectedId);
+
+            $successor->notify(new ClubPresidencyTransferProposed($transfer));
+
+            foreach ($admins as $admin) {
+                $admin->notify(new ClubPresidentAccountDeleted(
+                    clubId: $clubId,
+                    clubName: $data['club_name'],
+                    formerPresidentName: $user->name,
+                    successorProposed: true,
+                    successorName: $successor->name,
+                ));
+            }
         }
 
-        foreach (array_keys($this->clubsWithoutSuccessorForDeletion) as $clubId) {
+        foreach ($this->clubsWithoutSuccessorForDeletion as $clubId => $clubName) {
             Club::where('id', $clubId)->update(['president_id' => null]);
+
+            foreach ($admins as $admin) {
+                $admin->notify(new ClubPresidentAccountDeleted(
+                    clubId: $clubId,
+                    clubName: $clubName,
+                    formerPresidentName: $user->name,
+                    successorProposed: false,
+                ));
+            }
         }
 
         tap($user, $logout(...))->delete();

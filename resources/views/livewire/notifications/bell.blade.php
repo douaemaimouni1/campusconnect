@@ -36,8 +36,12 @@
                         @php $transfer = $transfers[$notification->data['transfer_id']] ?? null; @endphp
 
                         <p class="text-sm text-gray-800">
-                            <strong>{{ $notification->data['current_president_name'] }}</strong>
-                            {{ __('te propose de devenir président(e) du club') }}
+                            @if ($notification->data['current_president_name'])
+                                <strong>{{ $notification->data['current_president_name'] }}</strong>
+                                {{ __('te propose de devenir président(e) du club') }}
+                            @else
+                                {{ __('L\'administration te propose de devenir président(e) du club') }}
+                            @endif
                             <strong>{{ $notification->data['club_name'] }}</strong>.
                         </p>
 
@@ -156,6 +160,27 @@
                                 {{ __('Voir le club') }}
                             </a>
                         @endif
+
+                    {{-- ===== Un président de club a supprimé son compte (reçue par les Super Admins) ===== --}}
+                    @elseif ($notification->type === \App\Notifications\ClubPresidentAccountDeleted::class)
+                        <p class="text-sm text-gray-800">
+                            <strong>{{ $notification->data['former_president_name'] }}</strong>
+                            {{ __('a supprimé son compte.') }}
+                            @if ($notification->data['successor_proposed'])
+                                {{ __('Un transfert de présidence pour le club') }}
+                                <strong>{{ $notification->data['club_name'] }}</strong>
+                                {{ __('a été proposé à') }}
+                                <strong>{{ $notification->data['successor_name'] }}</strong>.
+                            @else
+                                {{ __('Le club') }}
+                                <strong>{{ $notification->data['club_name'] }}</strong>
+                                {{ __('n\'a plus de président et nécessite une intervention.') }}
+                            @endif
+                        </p>
+
+                        <a href="{{ route('clubs.show', $notification->data['club_id']) }}" class="text-sm text-indigo-600 hover:text-indigo-800 underline mt-1 inline-block">
+                            {{ __('Voir le club') }}
+                        </a>
                     @endif
 
                     <p class="text-xs text-gray-400 mt-2">

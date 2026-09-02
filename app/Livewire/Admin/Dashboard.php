@@ -44,6 +44,15 @@ class Dashboard extends Component
     // [club_id => id du candidat choisi] (uniquement pour les clubs de $clubsNeedingSuccessor)
     public array $selectedSuccessors = [];
 
+    // Id du club orphelin (president_id = NULL) pour lequel on propose un
+    // nouveau président (null = aucune modale ouverte). Contrairement à
+    // $clubsNeedingSuccessor/$clubsWithoutSuccessor, ce flux n'est PAS
+    // restreint aux membres du club (voir eligiblePresidentCandidates()).
+    public ?int $proposingPresidentForClub = null;
+
+    // Texte tapé dans le champ de recherche de la modale de proposition de président.
+    public string $presidentSearch = '';
+
     public function confirmClubDeletion(int $clubId): void
     {
         $this->confirmingClubDeletion = $clubId;
@@ -241,6 +250,111 @@ class Dashboard extends Component
             ->get();
     }
 
+    /**
+     * Ouvre la modale de proposition de président pour un club orphelin.
+     *
+     * Contrairement à confirmUserBanToggle() (succession volontaire), on ne
+     * vérifie PAS que l'utilisateur est déjà membre du club : un club
+     * orphelin peut n'avoir aucun membre du tout (voir eligiblePresidentCandidates()).
+     */
+    public function openPresidentProposal(int $clubId): void
+    {
+        abort_if(! auth()->user()->isSuperAdmin(), 403);
+
+        $club = Club::findOrFail($clubId);
+
+        // Sécurité en profondeur : le bouton ne doit apparaître côté vue que
+        // pour un club sans président, mais on ne fait jamais confiance
+        // uniquement à l'affichage.
+        abort_if($club->president_id !== null, 403);
+
+        // On évite d'ouvrir une deuxième proposition concurrente si une
+        // proposition est déjà en attente de réponse pour ce club.
+        $alreadyPending = ClubPresidencyTransfer::where('club_id', $clubId)
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($alreadyPending) {
+            session()->flash('success', "Une proposition de présidence est déjà en attente de réponse pour ce club.");
+
+            return;
+        }
+
+        $this->proposingPresidentForClub = $clubId;
+        $this->presidentSearch = '';
+    }
+
+    public function cancelPresidentProposal(): void
+    {
+        $this->proposingPresidentForClub = null;
+        $this->presidentSearch = '';
+    }
+
+    /**
+     * Envoie la proposition de présidence à l'utilisateur choisi.
+     *
+     * Le candidat n'est pas assigné immédiatement : il reçoit une
+     * notification (réutilise ClubPresidencyTransferProposed) et doit
+     * accepter depuis Notifications\Bell::respondToTransfer() pour devenir
+     * effectivement président.
+     */
+    public function proposePresident(int $userId): void
+    {
+        abort_if(! auth()->user()->isSuperAdmin(), 403);
+        abort_if(! $this->proposingPresidentForClub, 403);
+
+        $club = Club::findOrFail($this->proposingPresidentForClub);
+
+        // Revérification : le club doit toujours être orphelin au moment du clic.
+        abort_if($club->president_id !== null, 403);
+
+        $alreadyPending = ClubPresidencyTransfer::where('club_id', $club->id)
+            ->where('status', 'pending')
+            ->exists();
+
+        abort_if($alreadyPending, 409);
+
+        $candidate = User::findOrFail($userId);
+
+        abort_if($candidate->is_banned || ! $candidate->profile_completed, 422);
+
+        $transfer = ClubPresidencyTransfer::create([
+            'club_id' => $club->id,
+            'current_president_id' => null,
+            'proposed_president_id' => $candidate->id,
+            'status' => 'pending',
+            'initiated_by' => 'admin',
+            'reason' => 'vacant',
+        ]);
+
+        $candidate->notify(new ClubPresidencyTransferProposed($transfer));
+
+        $this->cancelPresidentProposal();
+
+        session()->flash('success', "La proposition de présidence pour « {$club->name} » a été envoyée à {$candidate->name}.");
+    }
+
+    /**
+     * Liste des candidats affichables dans la modale de proposition de
+     * président : utilisateurs actifs (non bannis, profil complété), filtrés
+     * par la recherche (nom ou email). Volontairement PAS restreint aux
+     * membres du club (un club orphelin peut n'avoir aucun membre).
+     */
+    private function eligiblePresidentCandidates()
+    {
+        return User::where('is_banned', false)
+            ->where('profile_completed', true)
+            ->when($this->presidentSearch !== '', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->presidentSearch . '%')
+                        ->orWhere('email', 'like', '%' . $this->presidentSearch . '%');
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+    }
+
     public function render()
     {
         $stats = [
@@ -262,10 +376,15 @@ class Dashboard extends Component
         $users = User::latest()
             ->paginate(10, ['*'], 'usersPage');
 
+        $presidentCandidates = $this->proposingPresidentForClub
+            ? $this->eligiblePresidentCandidates()
+            : collect();
+
         return view('livewire.admin.dashboard', [
             'stats' => $stats,
             'clubs' => $clubs,
             'users' => $users,
+            'presidentCandidates' => $presidentCandidates,
         ]);
     }
 }

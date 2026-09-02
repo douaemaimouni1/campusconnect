@@ -28,7 +28,9 @@ class ClubPresidencyTransferProposed extends Notification
             'transfer_id' => $this->transfer->id,
             'club_id' => $this->transfer->club_id,
             'club_name' => $this->transfer->club->name,
-            'current_president_name' => $this->transfer->currentPresident->name,
+            // Nullable : pour un club orphelin (reason = 'vacant'), le
+            // transfert n'a volontairement pas d'ancien président.
+            'current_president_name' => $this->transfer->currentPresident?->name,
         ];
     }
 }
