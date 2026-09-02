@@ -6,7 +6,7 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-5xl mx-auto py-8 px-6">
+        <div class="max-w-5xl mx-auto py-8 px-6" wire:poll.visible.15s>
 
         {{-- ================= HEADER DU CLUB ================= --}}
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-10">

@@ -1,4 +1,4 @@
-<div>
+resources/views/livewire/clubs/show.blade.php
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <h2 class="font-semibold text-2xl text-gray-800">
