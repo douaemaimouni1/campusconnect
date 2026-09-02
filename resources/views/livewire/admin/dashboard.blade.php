@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.visible.15s>
     <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
         🛠️ Dashboard Super Admin
     </h2>
