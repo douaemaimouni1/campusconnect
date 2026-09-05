@@ -49,16 +49,6 @@
 
                     </x-nav-link>
 
-                    <x-nav-link
-                        :href="route('clubs.create')"
-                        :active="request()->routeIs('clubs.create')"
-                        class="flex items-center gap-1.5">
-
-                        <x-lucide-plus-circle class="w-4 h-4" />
-                        Créer un club
-
-                    </x-nav-link>
-
                     @if(auth()->user()->isSuperAdmin())
                         <x-nav-link
                             :href="route('admin.dashboard')"
@@ -170,13 +160,6 @@
             class="flex items-center gap-2">
             <x-lucide-calendar class="w-4 h-4" />
             Événements
-        </x-responsive-nav-link>
-
-        <x-responsive-nav-link
-            :href="route('clubs.create')"
-            class="flex items-center gap-2">
-            <x-lucide-plus-circle class="w-4 h-4" />
-            Créer un club
         </x-responsive-nav-link>
 
         @if(auth()->user()->isSuperAdmin())

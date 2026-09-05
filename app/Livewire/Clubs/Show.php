@@ -391,6 +391,8 @@ class Show extends Component
 
     public function render()
     {
+        $this->refreshStatuses();
+
         $this->club->loadCount([
             'memberships as members_count' => fn ($q) => $q->where('status', 'accepted'),
         ]);
@@ -414,5 +416,5 @@ class Show extends Component
             'members' => $members,
         ]);
     }
-    
+
 }

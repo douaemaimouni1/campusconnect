@@ -9,25 +9,34 @@ use App\Notifications\ClubMembershipRequested;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
-    use WithPagination;
-
     public string $search = '';
     public string $category = '';
+    public bool $onlyMyPresidentClubs = false;
 
-    public function updatedSearch()
+    public bool $showCreateClubModal = false;
+
+    public function mount()
+{
+    if (request()->boolean('create')) {
+        $this->showCreateClubModal = true;
+    }
+}
+
+    public function openCreateClubModal()
     {
-        $this->resetPage();
+        $this->showCreateClubModal = true;
     }
 
-    public function updatedCategory()
+    #[On('cancel-club-form')]
+    public function closeCreateClubModal()
     {
-        $this->resetPage();
+        $this->showCreateClubModal = false;
     }
 
     /**
@@ -79,7 +88,6 @@ class Index extends Component
         }
     }
 
-
     public function cancelRequest(int $clubId)
     {
         $membership = ClubMembership::where('user_id', Auth::id())
@@ -111,22 +119,31 @@ class Index extends Component
             ->when($this->category !== '', function ($query) {
                 $query->where('category', $this->category);
             })
+            ->when($this->onlyMyPresidentClubs, function ($query) {
+                $query->where('president_id', Auth::id());
+            })
             ->orderBy('name')
-            ->paginate(9);
+            ->get();
 
         $myMemberships = ClubMembership::where('user_id', Auth::id())
             ->whereIn('club_id', $clubs->pluck('id'))
             ->pluck('status', 'club_id');
 
-        $categories = Club::query()
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+        // Catégories du filtre : la liste fixe de ClubForm, pas les valeurs
+        // brutes de la base (qui contiennent des erreurs de saisie type
+        // "info", "civil", "new" entrées avant l'existence du menu déroulant).
+        $categories = collect(ClubForm::CATEGORIES)->pluck('label');
+
+        // Icône + couleur associées à chaque catégorie, pour styliser les cartes.
+        // Indexé par label, car club.category stocke le texte affiché, pas une clé technique.
+        $categoryMeta = collect(ClubForm::CATEGORIES)
+            ->mapWithKeys(fn ($cat) => [$cat['label'] => ['icon' => $cat['icon'], 'color' => $cat['color']]]);
 
         return view('livewire.clubs.index', [
             'clubs' => $clubs,
             'myMemberships' => $myMemberships,
             'categories' => $categories,
+            'categoryMeta' => $categoryMeta,
         ]);
     }
 }

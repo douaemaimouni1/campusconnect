@@ -21,7 +21,7 @@
 
             <div class="flex flex-wrap items-center gap-4 mt-7">
 
-                <a href="{{ route('clubs.create') }}"
+                <<a href="{{ route('clubs.index', ['create' => 1]) }}"
                    class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-ink font-semibold px-6 py-2.5 rounded-xl transition">
                     <x-lucide-plus-circle class="w-4 h-4" />
                     Créer un club
