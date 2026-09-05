@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Livewire\Events;
+
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\User;
@@ -8,18 +10,24 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+
 #[Layout('layouts.app')]
 class Show extends Component
 {
     public Event $event;
     public ?string $registrationStatus = null;
     public bool $isOrganizer = false;
+
+    // --- Nouveau : modal liste des participants (organisateur uniquement) ---
+    public bool $showParticipantsModal = false;
+
     public function mount(Event $event)
     {
         $this->event = $event;
         $this->isOrganizer = $event->club->president_id === Auth::id();
         $this->refreshStatus();
     }
+
     protected function refreshStatus()
     {
         $this->registrationStatus = EventRegistration::where('user_id', Auth::id())
@@ -27,6 +35,7 @@ class Show extends Component
             ->whereIn('status', ['pending', 'confirmed'])
             ->value('status');
     }
+
     public function joinEvent()
     {
         if ($this->isOrganizer || $this->registrationStatus !== null) {
@@ -60,6 +69,7 @@ class Show extends Component
 
         $this->refreshStatus();
     }
+
     /**
      * Annule une inscription (en attente ou confirmée). Si elle était
      * encore en attente, supprime aussi la notification déjà envoyée au
@@ -90,12 +100,42 @@ class Show extends Component
 
         $this->refreshStatus();
     }
+
+    // --- Nouveau : ouvrir/fermer le modal, réservé à l'organisateur ---
+    public function openParticipantsModal()
+    {
+        if (! $this->isOrganizer) {
+            return;
+        }
+
+        $this->showParticipantsModal = true;
+    }
+
+    public function closeParticipantsModal()
+    {
+        $this->showParticipantsModal = false;
+    }
+
     public function render()
     {
         $this->event->loadCount([
             'eventRegistrations as participants_count' => fn ($q) => $q->where('status', 'confirmed'),
         ]);
         $this->event->load('club');
-        return view('livewire.events.show');
+
+        // --- Nouveau : liste des participants confirmés, seulement si le modal est ouvert et qu'on est l'organisateur ---
+        $participants = collect();
+
+        if ($this->isOrganizer && $this->showParticipantsModal) {
+            $participants = $this->event->eventRegistrations()
+                ->where('status', 'confirmed')
+                ->with('user')
+                ->orderBy('registered_at')
+                ->get();
+        }
+
+        return view('livewire.events.show', [
+            'participants' => $participants,
+        ]);
     }
 }

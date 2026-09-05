@@ -325,7 +325,18 @@
                                         <x-lucide-map-pin class="w-4 h-4" />
                                         {{ $linkedEvent->location }}
                                     </p>
-                                    <p>{{ $linkedEvent->participants_count }} / {{ $linkedEvent->capacity }} participants</p>
+
+                                    @if ($club->president_id === auth()->id())
+                                        <button
+                                            type="button"
+                                            wire:click="openEventParticipantsModal({{ $linkedEvent->id }})"
+                                            class="flex items-center gap-1.5 hover:text-pine-600 hover:underline transition">
+                                            <x-lucide-users class="w-4 h-4" />
+                                            {{ $linkedEvent->participants_count }} / {{ $linkedEvent->capacity }} participants
+                                        </button>
+                                    @else
+                                        <p>{{ $linkedEvent->participants_count }} / {{ $linkedEvent->capacity }} participants</p>
+                                    @endif
                                 </div>
 
                                 <div class="mt-4">
@@ -453,6 +464,55 @@
                     @empty
 
                         <p class="text-muted text-sm text-center py-4">Aucun membre pour le moment.</p>
+
+                    @endforelse
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+    {{-- ================= MODALE : LISTE DES PARTICIPANTS À UN ÉVÉNEMENT ================= --}}
+    @if ($showEventParticipantsModal)
+
+        <div
+            wire:click.self="closeEventParticipantsModal"
+            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+
+                <div class="flex items-center justify-between p-5 border-b border-gray-100">
+                    <h3 class="font-serif text-lg font-bold text-ink flex items-center gap-2">
+                        <x-lucide-users class="w-5 h-5 text-pine-600" />
+                        Participants ({{ $eventParticipants->count() }})
+                    </h3>
+                    <button
+                        wire:click="closeEventParticipantsModal"
+                        type="button"
+                        class="text-muted hover:text-ink">
+                        <x-lucide-x class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto p-5 space-y-3">
+
+                    @forelse ($eventParticipants as $registration)
+
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600 text-sm">
+                                {{ strtoupper(substr($registration->user->name ?? '?', 0, 1)) }}
+                            </div>
+                            <p class="font-semibold text-ink text-sm">
+                                {{ $registration->user->name ?? 'Utilisateur supprimé' }}
+                            </p>
+                        </div>
+
+                    @empty
+
+                        <p class="text-muted text-sm text-center py-4">Aucun participant confirmé pour le moment.</p>
 
                     @endforelse
 

@@ -21,7 +21,7 @@
 
             <div class="flex flex-wrap items-center gap-4 mt-7">
 
-                <<a href="{{ route('clubs.index', ['create' => 1]) }}"
+                <a href="{{ route('clubs.index', ['create' => 1]) }}"
                    class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-ink font-semibold px-6 py-2.5 rounded-xl transition">
                     <x-lucide-plus-circle class="w-4 h-4" />
                     Créer un club
@@ -117,7 +117,16 @@
                             {{-- Mini-carte événement lié --}}
                             @if ($post->event)
 
+                                @php
+                                    $isEventOrganizer = $post->club->president_id === auth()->id();
+                                @endphp
+
                                 <div class="mt-4 border border-ink/10 rounded-xl p-4">
+
+                                    @if ($post->event->image)
+                                        <img src="{{ asset('storage/' . $post->event->image) }}"
+                                             class="w-full h-40 object-cover rounded-lg mb-3">
+                                    @endif
 
                                     <h4 class="font-serif font-bold text-ink">{{ $post->event->title }}</h4>
 
@@ -130,7 +139,18 @@
                                             <x-lucide-map-pin class="w-4 h-4" />
                                             {{ $post->event->location }}
                                         </p>
-                                        <p>{{ $post->event->participants_count }} / {{ $post->event->capacity }} participants</p>
+
+                                        @if ($isEventOrganizer)
+                                            <button
+                                                type="button"
+                                                wire:click="openEventParticipantsModal({{ $post->event->id }})"
+                                                class="flex items-center gap-1.5 hover:text-pine-600 hover:underline transition">
+                                                <x-lucide-users class="w-4 h-4" />
+                                                {{ $post->event->participants_count }} / {{ $post->event->capacity }} participants
+                                            </button>
+                                        @else
+                                            <p>{{ $post->event->participants_count }} / {{ $post->event->capacity }} participants</p>
+                                        @endif
                                     </div>
 
                                     <a href="{{ route('events.show', $post->event) }}"
@@ -252,5 +272,58 @@
         </div>
 
     </div>
+
+    {{-- ================= MODALE : LISTE DES PARTICIPANTS À UN ÉVÉNEMENT ================= --}}
+    @if ($showEventParticipantsModal)
+
+        <div
+            wire:click.self="closeEventParticipantsModal"
+            class="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
+
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+
+                <div class="flex items-center justify-between p-5 border-b border-ink/10">
+                    <h3 class="font-serif text-lg font-bold text-ink flex items-center gap-2">
+                        <x-lucide-users class="w-5 h-5 text-pine-600" />
+                        Participants ({{ $this->eventParticipants->count() }})
+                    </h3>
+                    <button
+                        wire:click="closeEventParticipantsModal"
+                        type="button"
+                        class="text-muted hover:text-ink">
+                        <x-lucide-x class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto p-4 space-y-2">
+
+                    @forelse ($this->eventParticipants as $registration)
+
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-pine-50">
+                            <div class="w-9 h-9 rounded-full bg-pine-50 flex items-center justify-center shrink-0">
+                                <span class="text-sm font-semibold text-pine-700">
+                                    {{ strtoupper(substr($registration->user->name ?? '?', 0, 1)) }}
+                                </span>
+                            </div>
+                            <p class="text-sm font-medium text-ink truncate">
+                                {{ $registration->user->name ?? 'Utilisateur supprimé' }}
+                            </p>
+                        </div>
+
+                    @empty
+
+                        <p class="text-sm text-muted text-center py-6">
+                            Aucun participant confirmé pour le moment.
+                        </p>
+
+                    @endforelse
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
 
 </div>

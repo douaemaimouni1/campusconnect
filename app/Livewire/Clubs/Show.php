@@ -29,6 +29,10 @@ class Show extends Component
 
     public bool $showMembersModal = false;
 
+    // --------- Modale liste des participants à un événement (président uniquement) ---------
+    public bool $showEventParticipantsModal = false;
+    public ?int $participantsEventId = null;
+
     // --------- Modale de post (post simple OU post + événement) ---------
     public bool $showPostModal = false;
     public string $postType = 'post'; // 'post' ou 'event'
@@ -92,6 +96,22 @@ class Show extends Component
     public function toggleMembersModal()
     {
         $this->showMembersModal = ! $this->showMembersModal;
+    }
+
+    // --------- Liste des participants à un événement ---------
+
+    public function openEventParticipantsModal(int $eventId)
+    {
+        abort_if($this->club->president_id !== Auth::id(), 403);
+
+        $this->participantsEventId = $eventId;
+        $this->showEventParticipantsModal = true;
+    }
+
+    public function closeEventParticipantsModal()
+    {
+        $this->showEventParticipantsModal = false;
+        $this->participantsEventId = null;
     }
 
     // --------- Gestion des posts / événements ---------
@@ -411,9 +431,20 @@ class Show extends Component
             ->with('user')
             ->get();
 
+        $eventParticipants = collect();
+
+        if ($this->showEventParticipantsModal && $this->participantsEventId) {
+            $eventParticipants = EventRegistration::where('event_id', $this->participantsEventId)
+                ->where('status', 'confirmed')
+                ->with('user')
+                ->orderBy('registered_at')
+                ->get();
+        }
+
         return view('livewire.clubs.show', [
             'posts' => $posts,
             'members' => $members,
+            'eventParticipants' => $eventParticipants,
         ]);
     }
 
