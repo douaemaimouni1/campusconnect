@@ -1,1 +1,0 @@
-<h1>Liste des événements</h1>
