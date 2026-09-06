@@ -26,7 +26,7 @@
             <div class="px-8 pb-8">
 
                 {{-- Avatar + nom : chevauchent volontairement la bannière (marge négative isolée) --}}
-                <div class="-mt-12 mb-4 flex items-end gap-4">
+                 <div class="-mt-12 mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
                     @if ($club->logo)
                         <img src="{{ asset('storage/' . $club->logo) }}"
                              class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg bg-white shrink-0">
@@ -36,7 +36,7 @@
                         </div>
                     @endif
 
-                    <h1 class="font-serif font-bold text-3xl text-ink pb-2">
+                    <h1 class="font-serif font-bold text-3xl text-ink pb-2 mt-3 sm:mt-0">
                         {{ $club->name }}
                     </h1>
                 </div>
