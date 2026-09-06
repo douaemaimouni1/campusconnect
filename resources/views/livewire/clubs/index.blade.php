@@ -7,12 +7,24 @@
                 Découvrir les clubs
             </h2>
 
-            <button
-                wire:click="openCreateClubModal"
-                class="flex items-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-4 py-2 rounded-lg font-semibold transition">
-                <x-lucide-plus class="w-4 h-4" />
-                Créer un club
-            </button>
+                       <div class="flex items-center gap-3 flex-wrap">
+                <button
+                    wire:click="$set('onlyMyPresidentClubs', {{ $onlyMyPresidentClubs ? 'false' : 'true' }})"
+                    class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold border transition
+                           {{ $onlyMyPresidentClubs
+                                ? 'bg-pine-600 border-pine-600 text-white'
+                                : 'bg-white border-muted-300 text-ink-700 hover:bg-muted-50' }}">
+                    <x-lucide-crown class="w-4 h-4" />
+                    Mes clubs
+                </button>
+
+                <button
+                    wire:click="openCreateClubModal"
+                    class="flex items-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                    <x-lucide-plus class="w-4 h-4" />
+                    Créer un club
+                </button>
+            </div>
         </div>
     </div>
 
@@ -39,15 +51,7 @@
                 @endforeach
             </select>
 
-            <button
-                wire:click="$set('onlyMyPresidentClubs', {{ $onlyMyPresidentClubs ? 'false' : 'true' }})"
-                class="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold border transition
-                       {{ $onlyMyPresidentClubs
-                            ? 'bg-pine-600 border-pine-600 text-white'
-                            : 'bg-white border-muted-300 text-ink-700 hover:bg-muted-50' }}">
-                <x-lucide-crown class="w-4 h-4" />
-                Mes clubs
-            </button>
+            
 
         </div>
 

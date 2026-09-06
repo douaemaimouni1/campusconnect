@@ -5,21 +5,21 @@
 
         <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;"></div>
 
-        <div class="max-w-7xl mx-auto px-6 py-14 relative">
+           
+               <div class="max-w-7xl mx-auto px-6 py-5 sm:py-8 relative">
 
-            <h1 class="text-3xl sm:text-4xl font-bold text-white">
+            <h1 class="text-2xl sm:text-4xl font-bold text-white">
                 Bienvenue sur CampusConnect
             </h1>
 
-            <p class="text-amber-300 font-semibold text-lg mt-2">
+            <p class="text-amber-300 font-semibold text-sm sm:text-lg mt-1 sm:mt-2">
                 Tout ce qui fait vivre ton campus, au même endroit.
             </p>
 
-            <p class="text-pine-50 mt-4 max-w-md">
+            <p class="hidden sm:block text-pine-50 mt-2 max-w-md">
                 Découvre les clubs, les événements et les publications de ta communauté étudiante.
             </p>
-
-            <div class="flex flex-wrap items-center gap-4 mt-7">
+            <div class="flex flex-wrap items-center gap-3 mt-3 sm:mt-5">
 
                 <a href="{{ route('clubs.index', ['create' => 1]) }}"
                    class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-ink font-semibold px-6 py-2.5 rounded-xl transition">
