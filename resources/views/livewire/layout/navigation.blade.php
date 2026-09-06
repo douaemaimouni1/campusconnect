@@ -11,7 +11,9 @@
 
                     <a href="{{ route('home') }}" class="flex items-center gap-2">
                         <x-application-logo class="block h-8 w-auto fill-current text-pine-600" />
-                        <span class="font-serif font-semibold text-lg text-ink hidden sm:block">CampusConnect</span>
+                        <span class="font-serif font-semibold text-lg hidden sm:block">
+                            <span class="text-ink">Campus</span><span class="text-amber-500">Connect</span>
+                        </span>
                     </a>
 
                 </div>

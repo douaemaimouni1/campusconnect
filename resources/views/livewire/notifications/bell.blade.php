@@ -3,10 +3,10 @@
     <button
         @click="open = ! open"
         wire:click="markInformationalAsRead"
-        class="relative p-2 rounded-md hover:bg-muted-100 focus:outline-none"
+        class="relative p-2 rounded-md hover:bg-muted/10 focus:outline-none"
         aria-label="Notifications"
     >
-        <x-lucide-bell class="w-5 h-5 text-ink-700" />
+        <x-lucide-bell class="w-5 h-5 text-ink" />
 
         @if ($unreadCount > 0)
             <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center">
@@ -29,13 +29,13 @@
         <div class="rounded-md ring-1 ring-black ring-opacity-5 bg-white max-h-96 overflow-y-auto">
 
             @forelse ($notifications as $notification)
-                <div wire:key="notification-{{ $notification->id }}" class="p-4 border-b border-muted-200 last:border-b-0 {{ $notification->read_at ? 'bg-white' : 'bg-pine-50' }}">
+                <div wire:key="notification-{{ $notification->id }}" class="p-4 border-b border-muted/15 last:border-b-0 {{ $notification->read_at ? 'bg-white' : 'bg-pine-50' }}">
 
                     {{-- ===== Proposition de présidence (reçue par le successeur) ===== --}}
                     @if ($notification->type === \App\Notifications\ClubPresidencyTransferProposed::class)
                         @php $transfer = $transfers[$notification->data['transfer_id']] ?? null; @endphp
 
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             @if ($notification->data['current_president_name'])
                                 <strong>{{ $notification->data['current_president_name'] }}</strong>
                                 {{ __('te propose de devenir président(e) du club') }}
@@ -63,14 +63,14 @@
                                 <x-lucide-check class="w-3.5 h-3.5" /> {{ __('Tu as accepté la présidence.') }}
                             </p>
                         @elseif ($transfer && $transfer->status === 'declined')
-                            <p class="flex items-center gap-1 text-xs text-muted-500 font-medium mt-2">
+                            <p class="flex items-center gap-1 text-xs text-muted font-medium mt-2">
                                 <x-lucide-x class="w-3.5 h-3.5" /> {{ __('Tu as refusé la présidence.') }}
                             </p>
                         @endif
 
                     {{-- ===== Réponse à une proposition de présidence (reçue par l'admin) ===== --}}
                     @elseif ($notification->type === \App\Notifications\ClubPresidencyTransferResponded::class)
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             <strong>{{ $notification->data['proposed_president_name'] }}</strong>
                             {{ $notification->data['status'] === 'accepted' ? __('a accepté de devenir président(e) du club') : __('a refusé de devenir président(e) du club') }}
                             <strong>{{ $notification->data['club_name'] }}</strong>.
@@ -84,7 +84,7 @@
                     @elseif ($notification->type === \App\Notifications\ClubMembershipRequested::class)
                         @php $membership = $memberships[$notification->data['membership_id']] ?? null; @endphp
 
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             <strong>{{ $notification->data['requester_name'] }}</strong>
                             {{ __('souhaite rejoindre le club') }}
                             <strong>{{ $notification->data['club_name'] }}</strong>.
@@ -104,12 +104,12 @@
                                 <x-lucide-check class="w-3.5 h-3.5" /> {{ __('Demande déjà acceptée.') }}
                             </p>
                         @else
-                            <p class="text-xs text-muted-500 font-medium mt-2">{{ __('Demande déjà traitée.') }}</p>
+                            <p class="text-xs text-muted font-medium mt-2">{{ __('Demande déjà traitée.') }}</p>
                         @endif
 
                     {{-- ===== Réponse à une demande d'adhésion (reçue par le demandeur) ===== --}}
                     @elseif ($notification->type === \App\Notifications\ClubMembershipResponded::class)
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             {{ __('Ta demande d\'adhésion au club') }}
                             <strong>{{ $notification->data['club_name'] }}</strong>
                             {{ $notification->data['status'] === 'accepted' ? __('a été acceptée. 🎉') : __('a été refusée.') }}
@@ -119,7 +119,7 @@
                     @elseif ($notification->type === \App\Notifications\EventRegistrationRequested::class)
                         @php $registration = $registrations[$notification->data['registration_id']] ?? null; @endphp
 
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             <strong>{{ $notification->data['requester_name'] }}</strong>
                             {{ __('souhaite participer à l\'événement') }}
                             <strong>{{ $notification->data['event_title'] }}</strong>
@@ -140,12 +140,12 @@
                                 <x-lucide-check class="w-3.5 h-3.5" /> {{ __('Demande déjà acceptée.') }}
                             </p>
                         @else
-                            <p class="text-xs text-muted-500 font-medium mt-2">{{ __('Demande déjà traitée.') }}</p>
+                            <p class="text-xs text-muted font-medium mt-2">{{ __('Demande déjà traitée.') }}</p>
                         @endif
 
                     {{-- ===== Réponse à une demande de participation (reçue par le demandeur) ===== --}}
                     @elseif ($notification->type === \App\Notifications\EventRegistrationResponded::class)
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             {{ __('Ta demande de participation à') }}
                             <strong>{{ $notification->data['event_title'] }}</strong>
                             {{ $notification->data['status'] === 'confirmed' ? __('a été confirmée. 🎉') : __('a été refusée.') }}
@@ -153,10 +153,10 @@
 
                     {{-- ===== Nouveau post publié dans un club dont je suis membre ===== --}}
                     @elseif ($notification->type === \App\Notifications\ClubPostCreated::class)
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             <strong>{{ $notification->data['club_name'] }}</strong>
                             {{ __('a publié :') }}
-                            <span class="text-muted-600">{{ $notification->data['content_preview'] }}</span>
+                            <span class="text-muted">{{ $notification->data['content_preview'] }}</span>
                         </p>
 
                         @if ($notification->data['event_id'])
@@ -171,7 +171,7 @@
 
                     {{-- ===== Un président de club a supprimé son compte (reçue par les Super Admins) ===== --}}
                     @elseif ($notification->type === \App\Notifications\ClubPresidentAccountDeleted::class)
-                        <p class="text-sm text-ink-700">
+                        <p class="text-sm text-ink">
                             <strong>{{ $notification->data['former_president_name'] }}</strong>
                             {{ __('a supprimé son compte.') }}
                             @if ($notification->data['successor_proposed'])
@@ -191,12 +191,12 @@
                         </a>
                     @endif
 
-                    <p class="text-xs text-muted-400 mt-2">
+                    <p class="text-xs text-muted/70 mt-2">
                         {{ $notification->created_at->diffForHumans() }}
                     </p>
                 </div>
             @empty
-                <p class="p-4 text-sm text-muted-500 text-center">
+                <p class="p-4 text-sm text-muted text-center">
                     {{ __('Aucune notification.') }}
                 </p>
             @endforelse
