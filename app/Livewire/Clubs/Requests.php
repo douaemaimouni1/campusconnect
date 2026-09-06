@@ -5,8 +5,13 @@ namespace App\Livewire\Clubs;
 use App\Models\Club;
 use App\Models\ClubMembership;
 use App\Models\EventRegistration;
+use App\Models\User;
+use App\Notifications\ClubMembershipRequested;
 use App\Notifications\ClubMembershipResponded;
+use App\Notifications\EventRegistrationRequested;
 use App\Notifications\EventRegistrationResponded;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -21,6 +26,23 @@ class Requests extends Component
         // le président de ce club (erreur 403 automatique sinon).
         $this->authorize('manage', $club);
         $this->club = $club;
+    }
+
+    /**
+     * Marque comme lue la notification de demande (adhésion ou
+     * participation) reçue par le président connecté, quand il traite la
+     * demande depuis cette page plutôt qu'en cliquant directement sur la
+     * notification. Sans ça, le badge de notifications non lues ne
+     * redescendait jamais pour les demandes traitées ici.
+     */
+    private function markRequestNotificationRead(string $type, string $dataKey, int $recordId): void
+    {
+        DatabaseNotification::where('notifiable_type', User::class)
+            ->where('notifiable_id', Auth::id())
+            ->where('type', $type)
+            ->where('data->' . $dataKey, $recordId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
     }
 
     /**
@@ -42,6 +64,8 @@ class Requests extends Component
             'responded_at' => now(),
         ]);
 
+        $this->markRequestNotificationRead(ClubMembershipRequested::class, 'membership_id', $membership->id);
+
         $membership->user->notify(new ClubMembershipResponded($this->club, 'accepted'));
     }
 
@@ -62,6 +86,8 @@ class Requests extends Component
         }
 
         $user = $membership->user;
+
+        $this->markRequestNotificationRead(ClubMembershipRequested::class, 'membership_id', $membership->id);
 
         $membership->delete();
 
@@ -102,6 +128,8 @@ class Requests extends Component
             'status' => 'confirmed',
         ]);
 
+        $this->markRequestNotificationRead(EventRegistrationRequested::class, 'registration_id', $registration->id);
+
         $registration->user->notify(new EventRegistrationResponded($registration->event, 'confirmed'));
     }
 
@@ -124,6 +152,8 @@ class Requests extends Component
 
         $user = $registration->user;
         $event = $registration->event;
+
+        $this->markRequestNotificationRead(EventRegistrationRequested::class, 'registration_id', $registration->id);
 
         $registration->delete();
 

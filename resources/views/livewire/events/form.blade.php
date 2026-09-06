@@ -1,88 +1,101 @@
 <div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <h2 class="font-semibold text-2xl text-gray-800">
+    <div class="max-w-xl mx-auto pt-6 px-6">
+        <h2 class="font-serif text-xl font-bold text-ink">
             {{ $event ? 'Modifier l\'événement' : 'Créer un événement' }}
         </h2>
     </div>
 
-    <div class="max-w-xl mx-auto py-8 px-6">
+    <div class="max-w-xl mx-auto py-6 px-6">
 
         @if (session()->has('success'))
-            <div class="bg-green-100 text-green-700 p-3 rounded-lg mb-4">
+            <div class="bg-pine-50 text-pine-700 p-3 rounded-lg mb-4">
                 {{ session('success') }}
             </div>
         @endif
 
-        <form wire:submit="save" class="bg-white rounded-2xl shadow p-8 space-y-5">
+        <form wire:submit="save" class="bg-white rounded-2xl shadow p-6 space-y-3">
 
             {{-- Image de l'événement --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Image de l'événement</label>
+                <label class="block text-sm font-medium text-ink mb-1">Image de l'événement</label>
 
-                <div class="h-40 rounded-xl overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-500 mb-2">
+                <div class="h-24 rounded-xl overflow-hidden bg-pine-700 relative mb-1">
                     @if ($image)
                         <img src="{{ $image->temporaryUrl() }}" class="w-full h-full object-cover">
                     @elseif ($existingImageUrl)
                         <img src="{{ $existingImageUrl }}" class="w-full h-full object-cover">
                     @endif
-                </div>
 
-                <input type="file" wire:model="image" accept="image/*" class="text-sm">
+                    <label for="event-image-upload" class="absolute inset-0 cursor-pointer">
+                        <span class="absolute bottom-2 right-2 flex items-center gap-1 bg-white/90 text-ink text-xs font-semibold px-2 py-1 rounded-lg shadow">
+                            <x-lucide-camera class="w-3.5 h-3.5" />
+                            Changer
+                        </span>
+                    </label>
+                    <input id="event-image-upload" type="file" wire:model="image" accept="image/*" class="hidden">
+                </div>
 
                 @error('image') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-                <input
-                    type="text"
-                    wire:model="title"
-                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                @error('title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            {{-- Titre + Lieu côte à côte --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-ink mb-1">Titre</label>
+                    <input
+                        type="text"
+                        wire:model="title"
+                        class="border border-muted-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                    @error('title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-ink mb-1">Lieu</label>
+                    <input
+                        type="text"
+                        wire:model="location"
+                        class="border border-muted-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                    @error('location') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label class="block text-sm font-medium text-ink mb-1">Description</label>
                 <textarea
                     wire:model="description"
-                    rows="4"
-                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"></textarea>
+                    rows="2"
+                    class="border border-muted-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none"></textarea>
                 @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
-                <input
-                    type="text"
-                    wire:model="location"
-                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                @error('location') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </div>
+            {{-- Date + Capacité côte à côte --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-ink mb-1">Date et heure</label>
+                    <input
+                        type="datetime-local"
+                        wire:model="date"
+                        min="{{ now()->format('Y-m-d\TH:i') }}"
+                        class="border border-muted-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                    @error('date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Date et heure</label>
-                <input
-                    type="datetime-local"
-                    wire:model="date"
-                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                @error('date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Capacité (nombre de places)</label>
-                <input
-                    type="number"
-                    min="1"
-                    wire:model="capacity"
-                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                @error('capacity') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                <div>
+                    <label class="block text-sm font-medium text-ink mb-1">Capacité (places)</label>
+                    <input
+                        type="number"
+                        min="1"
+                        wire:model="capacity"
+                        class="border border-muted-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                    @error('capacity') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
             </div>
 
             <button
                 type="submit"
                 wire:loading.attr="disabled"
-                class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-semibold transition">
+                class="bg-pine-600 hover:bg-pine-700 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-semibold transition">
                 {{ $event ? 'Enregistrer les modifications' : 'Créer l\'événement' }}
             </button>
 

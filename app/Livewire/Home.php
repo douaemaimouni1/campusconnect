@@ -133,6 +133,39 @@ class Home extends Component
             ->get();
     }
 
+    // --------- Suppression d'un post ou d'un événement depuis le fil ---------
+
+    /**
+     * Supprime un post simple (sans événement lié) depuis le fil d'accueil.
+     * Réservé au président du club auteur de CE post précis (le fil mélange
+     * des posts de plusieurs clubs).
+     */
+    public function deletePost(int $postId)
+    {
+        $post = ClubPost::whereNull('event_id')
+            ->with('club')
+            ->findOrFail($postId);
+
+        abort_if($post->club->president_id !== Auth::id(), 403);
+
+        $post->delete();
+    }
+
+    /**
+     * Supprime un événement et le post qui l'annonce, depuis le fil
+     * d'accueil. Réservé au président du club organisateur de CET
+     * événement précis.
+     */
+    public function deleteEvent(int $eventId)
+    {
+        $event = Event::with('club')->findOrFail($eventId);
+
+        abort_if($event->club->president_id !== Auth::id(), 403);
+
+        ClubPost::where('event_id', $event->id)->delete();
+        $event->delete();
+    }
+
     public function render()
     {
         return view('livewire.home');

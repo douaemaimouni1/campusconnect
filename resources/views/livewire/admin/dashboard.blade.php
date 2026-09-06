@@ -1,5 +1,5 @@
 <div wire:poll.visible.15s>
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
+    <h2 class="font-semibold text-xl text-ink leading-tight mb-6">
         🛠️ Dashboard Super Admin
     </h2>
 
@@ -11,29 +11,29 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
-            <p class="text-sm text-gray-500">👥 Utilisateurs</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $stats['users'] }}</p>
+        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pine-500">
+            <p class="text-sm text-muted-500">👥 Utilisateurs</p>
+            <p class="text-3xl font-bold text-ink">{{ $stats['users'] }}</p>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
-            <p class="text-sm text-gray-500">🏛 Clubs</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $stats['clubs'] }}</p>
+        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pine-600">
+            <p class="text-sm text-muted-500">🏛 Clubs</p>
+            <p class="text-3xl font-bold text-ink">{{ $stats['clubs'] }}</p>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
-            <p class="text-sm text-gray-500">📅 Événements</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $stats['events'] }}</p>
+        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pine-400">
+            <p class="text-sm text-muted-500">📅 Événements</p>
+            <p class="text-3xl font-bold text-ink">{{ $stats['events'] }}</p>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-orange-500">
-            <p class="text-sm text-gray-500">📳 Demandes d'adhésion en attente</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $stats['pendingMemberships'] }}</p>
+        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pine-700">
+            <p class="text-sm text-muted-500">📳 Demandes d'adhésion en attente</p>
+            <p class="text-3xl font-bold text-ink">{{ $stats['pendingMemberships'] }}</p>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-red-500">
-            <p class="text-sm text-gray-500">⏳ Demandes de participation en attente</p>
-            <p class="text-3xl font-bold text-gray-800">{{ $stats['pendingEventRequests'] }}</p>
+        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pine-800">
+            <p class="text-sm text-muted-500">⏳ Demandes de participation en attente</p>
+            <p class="text-3xl font-bold text-ink">{{ $stats['pendingEventRequests'] }}</p>
         </div>
 
     </div>
@@ -42,11 +42,11 @@
     <div class="mt-8 bg-white rounded-lg shadow overflow-hidden">
 
         <div class="px-5 py-4 border-b">
-            <h3 class="font-semibold text-lg text-gray-800">🏛 Gestion des clubs</h3>
+            <h3 class="font-semibold text-lg text-ink">🏛 Gestion des clubs</h3>
         </div>
 
         <table class="w-full text-left">
-            <thead class="bg-gray-50 text-sm text-gray-500">
+            <thead class="bg-gray-50 text-sm text-muted-500">
                 <tr>
                     <th class="px-5 py-3">Nom</th>
                     <th class="px-5 py-3">Catégorie</th>
@@ -58,21 +58,21 @@
             <tbody class="divide-y">
                 @forelse ($clubs as $club)
                     <tr wire:key="club-{{ $club->id }}">
-                        <td class="px-5 py-3 font-medium text-gray-800">{{ $club->name }}</td>
-                        <td class="px-5 py-3 text-gray-500">{{ $club->category }}</td>
-                        <td class="px-5 py-3 text-gray-500">
+                        <td class="px-5 py-3 font-medium text-ink">{{ $club->name }}</td>
+                        <td class="px-5 py-3 text-muted-500">{{ $club->category }}</td>
+                        <td class="px-5 py-3 text-muted-500">
                             @if ($club->president)
                                 {{ $club->president->name }}
                             @else
-                                <span class="text-gray-400">—</span>
+                                <span class="text-muted-500">—</span>
                                 <button
                                     wire:click="openPresidentProposal({{ $club->id }})"
-                                    class="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                    class="ml-2 text-pine-600 hover:text-pine-800 text-xs font-medium">
                                     👑 Proposer un président
                                 </button>
                             @endif
                         </td>
-                        <td class="px-5 py-3 text-gray-500">{{ $club->members_count }}</td>
+                        <td class="px-5 py-3 text-muted-500">{{ $club->members_count }}</td>
                         <td class="px-5 py-3 text-right">
                             <button
                                 wire:click="confirmClubDeletion({{ $club->id }})"
@@ -83,7 +83,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-5 py-6 text-center text-gray-400">
+                        <td colspan="5" class="px-5 py-6 text-center text-muted-500">
                             Aucun club pour le moment.
                         </td>
                     </tr>
@@ -101,11 +101,11 @@
     <div class="mt-8 bg-white rounded-lg shadow overflow-hidden">
 
         <div class="px-5 py-4 border-b">
-            <h3 class="font-semibold text-lg text-gray-800">👥 Gestion des utilisateurs</h3>
+            <h3 class="font-semibold text-lg text-ink">👥 Gestion des utilisateurs</h3>
         </div>
 
         <table class="w-full text-left">
-            <thead class="bg-gray-50 text-sm text-gray-500">
+            <thead class="bg-gray-50 text-sm text-muted-500">
                 <tr>
                     <th class="px-5 py-3">Nom</th>
                     <th class="px-5 py-3">Email</th>
@@ -118,16 +118,16 @@
             <tbody class="divide-y">
                 @forelse ($users as $user)
                     <tr wire:key="user-{{ $user->id }}">
-                        <td class="px-5 py-3 font-medium text-gray-800">{{ $user->name }}</td>
-                        <td class="px-5 py-3 text-gray-500">{{ $user->email }}</td>
-                        <td class="px-5 py-3 text-gray-500">{{ $user->department ?? '—' }}</td>
+                        <td class="px-5 py-3 font-medium text-ink">{{ $user->name }}</td>
+                        <td class="px-5 py-3 text-muted-500">{{ $user->email }}</td>
+                        <td class="px-5 py-3 text-muted-500">{{ $user->department ?? '—' }}</td>
                         <td class="px-5 py-3">
                             @if ($user->isSuperAdmin())
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pine-100 text-pine-700">
                                     👑 Super Admin
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-muted-500">
                                     Utilisateur
                                 </span>
                             @endif
@@ -145,7 +145,7 @@
                         </td>
                         <td class="px-5 py-3 text-right">
                             @if ($user->id === auth()->id())
-                                <span class="text-gray-400 text-sm">— c'est vous —</span>
+                                <span class="text-muted-500 text-sm">— c'est vous —</span>
                             @elseif ($user->is_banned)
                                 <button
                                     wire:click="confirmUserBanToggle({{ $user->id }})"
@@ -163,7 +163,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-5 py-6 text-center text-gray-400">
+                        <td colspan="6" class="px-5 py-6 text-center text-muted-500">
                             Aucun utilisateur pour le moment.
                         </td>
                     </tr>
@@ -181,15 +181,15 @@
     @if ($confirmingClubDeletion)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-club-{{ $confirmingClubDeletion }}">
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">⚠️ Confirmer la suppression</h3>
-                <p class="text-gray-600 text-sm mb-6">
+                <h3 class="text-lg font-semibold text-ink mb-2">⚠️ Confirmer la suppression</h3>
+                <p class="text-muted-500 text-sm mb-6">
                     Cette action est irréversible depuis l'interface : le club et
                     tous ses événements seront supprimés. Confirmes-tu ?
                 </p>
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelClubDeletion"
-                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
                         Annuler
                     </button>
                     <button
@@ -206,14 +206,14 @@
     @if ($confirmingUserBanToggle)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-user-{{ $confirmingUserBanToggle }}">
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">⚠️ Confirmer l'action</h3>
-                <p class="text-gray-600 text-sm mb-6">
+                <h3 class="text-lg font-semibold text-ink mb-2">⚠️ Confirmer l'action</h3>
+                <p class="text-muted-500 text-sm mb-6">
                     Veux-tu vraiment changer le statut de ce compte utilisateur ?
                 </p>
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelUserBanToggle"
-                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
                         Annuler
                     </button>
                     <button
@@ -230,8 +230,8 @@
     @if ($selectingSuccessorUserId)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-succession-{{ $selectingSuccessorUserId }}">
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">👑 Suspension d'un président de club</h3>
-                <p class="text-gray-600 text-sm mb-4">
+                <h3 class="text-lg font-semibold text-ink mb-2">👑 Suspension d'un président de club</h3>
+                <p class="text-muted-500 text-sm mb-4">
                     Cet utilisateur sera <strong>suspendu immédiatement</strong> après
                     validation. Pour les clubs ci-dessous où un successeur est
                     disponible, une demande de transfert de présidence lui sera
@@ -241,16 +241,16 @@
                 </p>
 
                 @if (count($clubsNeedingSuccessor) > 0)
-                    <p class="text-sm font-medium text-gray-700 mb-2">
+                    <p class="text-sm font-medium text-ink mb-2">
                         Clubs avec successeur à choisir :
                     </p>
                     <div class="space-y-4 mb-6">
                         @foreach ($clubsNeedingSuccessor as $clubId => $data)
                             <div class="border rounded-md p-3">
-                                <p class="font-medium text-gray-800 text-sm mb-2">{{ $data['club_name'] }}</p>
+                                <p class="font-medium text-ink text-sm mb-2">{{ $data['club_name'] }}</p>
                                 <div class="space-y-1">
                                     @foreach ($data['candidates'] as $candidate)
-                                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                                        <label class="flex items-center gap-2 text-sm text-ink">
                                             <input
                                                 type="radio"
                                                 wire:model="selectedSuccessors.{{ $clubId }}"
@@ -266,11 +266,11 @@
                 @endif
 
                 @if (count($clubsWithoutSuccessor) > 0)
-                    <p class="text-sm font-medium text-gray-700 mb-2">
+                    <p class="text-sm font-medium text-ink mb-2">
                         Clubs sans successeur disponible (passeront sans président) :
                     </p>
                     <div class="mb-6">
-                        <ul class="list-disc list-inside text-sm text-gray-600 bg-gray-50 border rounded-md p-3">
+                        <ul class="list-disc list-inside text-sm text-muted-500 bg-gray-50 border rounded-md p-3">
                             @foreach ($clubsWithoutSuccessor as $clubName)
                                 <li>{{ $clubName }}</li>
                             @endforeach
@@ -281,7 +281,7 @@
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelSuccessorSelection"
-                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
                         Annuler
                     </button>
                     <button
@@ -298,8 +298,8 @@
     @if ($proposingPresidentForClub)
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" wire:key="modal-propose-president-{{ $proposingPresidentForClub }}">
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">👑 Proposer un président</h3>
-                <p class="text-gray-600 text-sm mb-4">
+                <h3 class="text-lg font-semibold text-ink mb-2">👑 Proposer un président</h3>
+                <p class="text-muted-500 text-sm mb-4">
                     Choisis un utilisateur actif de la plateforme (n'importe lequel,
                     pas forcément membre du club). Il recevra une notification et
                     devra <strong>accepter</strong> pour devenir président.
@@ -309,24 +309,24 @@
                     type="text"
                     wire:model.live.debounce.300ms="presidentSearch"
                     placeholder="Rechercher par nom ou email..."
-                    class="w-full border-gray-300 rounded-md text-sm mb-4 focus:border-indigo-500 focus:ring-indigo-500"
+                    class="w-full border-gray-300 rounded-md text-sm mb-4 focus:border-pine-500 focus:ring-pine-500"
                 >
 
                 <div class="space-y-1 mb-6">
                     @forelse ($presidentCandidates as $candidate)
                         <div class="flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50" wire:key="candidate-{{ $candidate->id }}">
                             <div>
-                                <p class="text-sm font-medium text-gray-800">{{ $candidate->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $candidate->email }}</p>
+                                <p class="text-sm font-medium text-ink">{{ $candidate->name }}</p>
+                                <p class="text-xs text-muted-500">{{ $candidate->email }}</p>
                             </div>
                             <button
                                 wire:click="proposePresident({{ $candidate->id }})"
-                                class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                class="text-pine-600 hover:text-pine-800 text-xs font-medium">
                                 Proposer
                             </button>
                         </div>
                     @empty
-                        <p class="text-sm text-gray-400 text-center py-4">
+                        <p class="text-sm text-muted-500 text-center py-4">
                             Aucun utilisateur trouvé.
                         </p>
                     @endforelse
@@ -335,7 +335,7 @@
                 <div class="flex justify-end">
                     <button
                         wire:click="cancelPresidentProposal"
-                        class="px-4 py-2 text-sm rounded-md border text-gray-600 hover:bg-gray-50">
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
                         Annuler
                     </button>
                 </div>

@@ -1,10 +1,4 @@
 <div>
-    <div class="mb-4">
-        <h2 class="font-semibold text-xl text-ink leading-tight">
-            {{ __('Mon profil') }}
-        </h2>
-    </div>
-
     <div
         class="max-w-3xl mx-auto space-y-4"
         x-data="{ activeTab: @js($errors->has('current_password') || $errors->has('password') || $errors->has('delete_password') ? 'security' : 'info') }"
@@ -289,7 +283,7 @@
                 <x-modal name="account-deletion-successor" focusable>
                     <div class="p-6">
                         <h3 class="text-lg font-medium text-ink flex items-center gap-2">
-                            <x-lucide-crown class="w-4 h-4 text-amber-500" />
+                            <x-lucide-crown class="w-4 h-4 text-pine-600" />
                             {{ __('Suppression de ton compte de président') }}
                         </h3>
 

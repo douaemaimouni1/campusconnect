@@ -58,6 +58,16 @@ class Show extends Component
     {
         $this->club = $club;
         $this->refreshStatuses();
+
+        // --- Nouveau : arrivée depuis l'accueil ou la page événement via le
+        // lien "Modifier" (?edit_post=ID) — rouvre directement la modale
+        // d'édition sur ce post précis. openEditPostModal() vérifie déjà
+        // que le poste appartient bien à CE club et que l'utilisateur est
+        // bien le président, donc aucune vérification supplémentaire n'est
+        // nécessaire ici.
+        if ($postId = request()->query('edit_post')) {
+            $this->openEditPostModal((int) $postId);
+        }
     }
 
     protected function refreshStatuses()

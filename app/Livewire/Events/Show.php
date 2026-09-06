@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Models\ClubPost;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\User;
@@ -20,6 +21,10 @@ class Show extends Component
 
     // --- Nouveau : modal liste des participants (organisateur uniquement) ---
     public bool $showParticipantsModal = false;
+
+    // --- Nouveau : id du post qui annonce cet événement, pour le lien "Modifier" ---
+    // (renvoie vers clubs.show, qui rouvre directement la modale d'édition sur ce post)
+    public ?int $relatedPostId = null;
 
     public function mount(Event $event)
     {
@@ -116,12 +121,32 @@ class Show extends Component
         $this->showParticipantsModal = false;
     }
 
+    /**
+     * Supprime l'événement (et le post qui l'annonce), depuis sa propre
+     * page dédiée. Réservé à l'organisateur. Redirige ensuite vers la
+     * page du club, puisqu'il n'y a plus de page événement à afficher.
+     */
+    public function deleteEvent()
+    {
+        abort_if(! $this->isOrganizer, 403);
+
+        $club = $this->event->club;
+
+        ClubPost::where('event_id', $this->event->id)->delete();
+        $this->event->delete();
+
+        return redirect()->route('clubs.show', $club);
+    }
+
     public function render()
     {
         $this->event->loadCount([
             'eventRegistrations as participants_count' => fn ($q) => $q->where('status', 'confirmed'),
         ]);
         $this->event->load('club');
+
+        // --- Nouveau : id du post lié, pour le lien "Modifier" (une seule ligne, pas de relation à ajouter au modèle) ---
+        $this->relatedPostId = ClubPost::where('event_id', $this->event->id)->value('id');
 
         // --- Nouveau : liste des participants confirmés, seulement si le modal est ouvert et qu'on est l'organisateur ---
         $participants = collect();

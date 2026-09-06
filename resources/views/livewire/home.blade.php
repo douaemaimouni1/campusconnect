@@ -57,7 +57,7 @@
                 class="w-full rounded-xl border-ink/15 shadow-sm pl-11 focus:ring-pine-500 focus:border-pine-500">
         </div>
 
-        <div class="grid lg:grid-cols-3 gap-8 items-start">
+        <div class="grid lg:grid-cols-3 gap-8 items-center lg:items-stretch">
 
             {{-- ================= FIL DE POSTS ================= --}}
             <div class="lg:col-span-2 space-y-6">
@@ -77,29 +77,89 @@
 
                     @foreach ($this->feedPosts as $post)
 
+                        @php
+                            $isPostOwner = $post->club->president_id === auth()->id();
+                        @endphp
+
                         <div wire:key="post-{{ $post->id }}" class="bg-white rounded-2xl border border-ink/10 border-l-[3px] border-l-pine-500 p-6">
 
                             {{-- Auteur --}}
-                            <div class="flex items-center gap-3 mb-4">
+                            <div class="flex items-center justify-between mb-4">
 
-                                @if ($post->user->avatar)
-                                    <img src="{{ asset('storage/' . $post->user->avatar) }}"
-                                         class="w-10 h-10 rounded-full object-cover">
-                                @else
-                                    <div class="w-10 h-10 rounded-full bg-pine-50 flex items-center justify-center font-serif font-semibold text-pine-600">
-                                        {{ strtoupper(substr($post->user->name, 0, 1)) }}
+                                <div class="flex items-center gap-3">
+
+                                    @if ($post->user->avatar)
+                                        <img src="{{ asset('storage/' . $post->user->avatar) }}"
+                                             class="w-10 h-10 rounded-full object-cover">
+                                    @else
+                                        <div class="w-10 h-10 rounded-full bg-pine-50 flex items-center justify-center font-serif font-semibold text-pine-600">
+                                            {{ strtoupper(substr($post->user->name, 0, 1)) }}
+                                        </div>
+                                    @endif
+
+                                    <div>
+                                        <p class="font-semibold text-ink flex items-center gap-1.5">
+                                            {{ $post->club->name }}
+                                            <span class="text-muted text-xs font-normal">· {{ $post->user->name }}</span>
+                                        </p>
+                                        <p class="text-xs text-muted">
+                                            {{ $post->created_at->diffForHumans() }}
+                                        </p>
                                     </div>
-                                @endif
 
-                                <div>
-                                    <p class="font-semibold text-ink flex items-center gap-1.5">
-                                        {{ $post->club->name }}
-                                        <span class="text-muted text-xs font-normal">· {{ $post->user->name }}</span>
-                                    </p>
-                                    <p class="text-xs text-muted">
-                                        {{ $post->created_at->diffForHumans() }}
-                                    </p>
                                 </div>
+
+                                {{-- Menu "⋮" — Modifier/Supprimer, réservé au président du club auteur de ce post --}}
+                                @if ($isPostOwner)
+
+                                    <div x-data="{ open: false }" class="relative">
+
+                                        <button
+                                            @click="open = ! open"
+                                            class="text-muted hover:text-ink px-2">
+                                            <x-lucide-more-vertical class="w-5 h-5" />
+                                        </button>
+
+                                        <div
+                                            x-show="open"
+                                            @click.outside="open = false"
+                                            x-cloak
+                                            class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-ink/10 py-1 z-10">
+
+                                            <a
+                                                href="{{ route('clubs.show', $post->club) }}?edit_post={{ $post->id }}"
+                                                class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-ink hover:bg-pine-50">
+                                                <x-lucide-pencil class="w-4 h-4" />
+                                                Modifier
+                                            </a>
+
+                                            @if ($post->event)
+
+                                                <button
+                                                    wire:click="deleteEvent({{ $post->event->id }})"
+                                                    wire:confirm="Supprimer cet événement et ce post ? Cette action est définitive."
+                                                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                    <x-lucide-trash-2 class="w-4 h-4" />
+                                                    Supprimer
+                                                </button>
+
+                                            @else
+
+                                                <button
+                                                    wire:click="deletePost({{ $post->id }})"
+                                                    wire:confirm="Supprimer ce post ? Cette action est définitive."
+                                                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                    <x-lucide-trash-2 class="w-4 h-4" />
+                                                    Supprimer
+                                                </button>
+
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+                                @endif
 
                             </div>
 

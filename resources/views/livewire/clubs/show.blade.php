@@ -1,11 +1,5 @@
 <div wire:poll.visible.15s>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <h2 class="font-serif font-semibold text-2xl text-ink">
-            {{ $club->name }}
-        </h2>
-    </div>
-
     <div class="max-w-3xl mx-auto py-8 px-6">
 
         @if (session()->has('error'))
@@ -31,101 +25,92 @@
 
             <div class="px-8 pb-8">
 
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between -mt-12">
+                {{-- Avatar + nom : chevauchent volontairement la bannière (marge négative isolée) --}}
+                <div class="-mt-12 mb-4 flex items-end gap-4">
+                    @if ($club->logo)
+                        <img src="{{ asset('storage/' . $club->logo) }}"
+                             class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg bg-white shrink-0">
+                    @else
+                        <div class="w-28 h-28 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center shrink-0">
+                            <x-lucide-landmark class="w-10 h-10 text-pine-600" />
+                        </div>
+                    @endif
 
-                    <div class="flex items-end gap-5">
+                    <h1 class="font-serif font-bold text-3xl text-ink pb-2">
+                        {{ $club->name }}
+                    </h1>
+                </div>
 
-                        @if ($club->logo)
-                            <img src="{{ asset('storage/' . $club->logo) }}"
-                                 class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg bg-white">
-                        @else
-                            <div class="w-28 h-28 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center">
-                                <x-lucide-landmark class="w-10 h-10 text-pine-600" />
-                            </div>
-                        @endif
+                {{-- Boutons d'action : toujours dans la zone blanche, jamais sur la bannière --}}
+                <div class="flex justify-end">
 
-                        <div class="pb-2">
-                            <span class="inline-block bg-pine-50 text-pine-600 text-xs font-semibold px-3 py-1 rounded-full mb-2">
-                                {{ $club->category }}
+                                       @if ($club->president_id === auth()->id())
+
+                        <div class="grid grid-cols-2 gap-3 w-full max-w-lg">
+
+                            <span class="inline-flex items-center justify-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-xl font-semibold">
+                                <x-lucide-crown class="w-4 h-4" />
+                                Vous êtes le président
                             </span>
-                            <h1 class="font-serif text-2xl font-bold text-ink">
-                                {{ $club->name }}
-                            </h1>
+
+                            <a href="{{ route('clubs.requests', $club) }}"
+                               class="inline-flex items-center justify-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-4 py-2 rounded-xl font-semibold transition">
+                                <x-lucide-clipboard-list class="w-4 h-4" />
+                                Gérer les demandes
+                            </a>
+
+                            <a href="{{ route('clubs.edit', $club) }}"
+                               class="inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-ink px-4 py-2 rounded-xl font-semibold transition">
+                                <x-lucide-pencil class="w-4 h-4" />
+                                Modifier
+                            </a>
+
+                            <button
+                                wire:click="togglePostModal"
+                                class="inline-flex items-center justify-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-4 py-2 rounded-xl font-semibold transition">
+                                <x-lucide-square-pen class="w-4 h-4" />
+                                Créer un post
+                            </button>
+
                         </div>
 
-                    </div>
-                    {{-- Bouton d'adhésion --}}
-                    <div class="mt-6 md:mt-0 md:pb-2">
+                    @elseif ($membershipStatus === 'accepted')
 
-                        @if ($club->president_id === auth()->id())
-
-                            <div class="flex items-center gap-3 flex-wrap">
-
-                                <span class="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-6 py-2 rounded-xl font-semibold">
-                                    <x-lucide-crown class="w-4 h-4" />
-                                    Vous êtes le président
-                                </span>
-
-                                <a href="{{ route('clubs.requests', $club) }}"
-                                   class="inline-flex items-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-6 py-2 rounded-xl font-semibold transition">
-                                    <x-lucide-clipboard-list class="w-4 h-4" />
-                                    Gérer les demandes
-                                </a>
-
-                                <a href="{{ route('clubs.edit', $club) }}"
-                                   class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-ink px-6 py-2 rounded-xl font-semibold transition">
-                                    <x-lucide-pencil class="w-4 h-4" />
-                                    Modifier
-                                </a>
-
-                                <button
-                                    wire:click="togglePostModal"
-                                    class="inline-flex items-center gap-2 bg-pine-600 hover:bg-pine-700 text-white px-6 py-2 rounded-xl font-semibold transition">
-                                    <x-lucide-square-pen class="w-4 h-4" />
-                                    Créer un post
-                                </button>
-
-                            </div>
-
-                        @elseif ($membershipStatus === 'accepted')
-
-                            <div class="flex items-center gap-3">
-                                <span class="inline-flex items-center gap-2 bg-pine-50 text-pine-600 px-6 py-2 rounded-xl font-semibold">
-                                    <x-lucide-check class="w-4 h-4" />
-                                    Membre
-                                </span>
-
-                                <button
-                                    wire:click="leaveClub"
-                                    wire:confirm="Quitter ce club ?"
-                                    wire:loading.attr="disabled"
-                                    class="bg-gray-100 hover:bg-red-50 text-muted hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
-                                    Quitter le club
-                                </button>
-                            </div>
-
-                        @elseif ($membershipStatus === 'pending')
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center gap-2 bg-pine-50 text-pine-600 px-6 py-2 rounded-xl font-semibold">
+                                <x-lucide-check class="w-4 h-4" />
+                                Membre
+                            </span>
 
                             <button
-                                wire:click="cancelMembership"
+                                wire:click="leaveClub"
+                                wire:confirm="Quitter ce club ?"
                                 wire:loading.attr="disabled"
-                                class="group bg-gray-100 hover:bg-red-50 text-muted hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
-                                <span class="group-hover:hidden">Demande envoyée</span>
-                                <span class="hidden group-hover:inline">Annuler</span>
+                                class="bg-gray-100 hover:bg-red-50 text-muted hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
+                                Quitter le club
                             </button>
+                        </div>
 
-                        @else
+                    @elseif ($membershipStatus === 'pending')
 
-                            <button
-                                wire:click="joinClub"
-                                wire:loading.attr="disabled"
-                                class="bg-pine-600 hover:bg-pine-700 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-semibold transition">
-                                Rejoindre le club
-                            </button>
+                        <button
+                            wire:click="cancelMembership"
+                            wire:loading.attr="disabled"
+                            class="group bg-gray-100 hover:bg-red-50 text-muted hover:text-red-600 px-6 py-2 rounded-xl font-semibold transition">
+                            <span class="group-hover:hidden">Demande envoyée</span>
+                            <span class="hidden group-hover:inline">Annuler</span>
+                        </button>
 
-                        @endif
+                    @else
 
-                    </div>
+                        <button
+                            wire:click="joinClub"
+                            wire:loading.attr="disabled"
+                            class="bg-pine-600 hover:bg-pine-700 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-semibold transition">
+                            Rejoindre le club
+                        </button>
+
+                    @endif
 
                 </div>
 
@@ -599,59 +584,64 @@
 
                     @else
 
-                        <div>
-                            <label class="block text-sm font-medium text-ink mb-1">Titre</label>
-                            <input
-                                type="text"
-                                wire:model="eventTitle"
-                                class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
-                            @error('eventTitle') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1">Titre</label>
+                                <input
+                                    type="text"
+                                    wire:model="eventTitle"
+                                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                                @error('eventTitle') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1">Lieu</label>
+                                <input
+                                    type="text"
+                                    wire:model="eventLocation"
+                                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                                @error('eventLocation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-ink mb-1">Description</label>
                             <textarea
                                 wire:model="eventDescription"
-                                rows="3"
+                                rows="2"
                                 class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none"></textarea>
                             @error('eventDescription') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-ink mb-1">Lieu</label>
-                            <input
-                                type="text"
-                                wire:model="eventLocation"
-                                class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
-                            @error('eventLocation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1">Date et heure</label>
+                                <input
+                                    type="datetime-local"
+                                    wire:model="eventDate"
+                                    min="{{ now()->format('Y-m-d\TH:i') }}"
+                                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                                @error('eventDate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-ink mb-1">Capacité</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    wire:model="eventCapacity"
+                                    class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
+                                @error('eventCapacity') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-ink mb-1">Date et heure</label>
-                            <input
-                                type="datetime-local"
-                                wire:model="eventDate"
-                                class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
-                            @error('eventDate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-ink mb-1">Capacité</label>
-                            <input
-                                type="number"
-                                min="1"
-                                wire:model="eventCapacity"
-                                class="border border-gray-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-pine-500 focus:border-pine-500 outline-none">
-                            @error('eventCapacity') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-ink mb-2">Image (optionnelle)</label>
+                            <label class="block text-sm font-medium text-ink mb-1">Image (optionnelle)</label>
 
                             @if ($eventImage)
-                                <img src="{{ $eventImage->temporaryUrl() }}" class="w-full h-40 object-cover rounded-lg mb-2">
+                                <img src="{{ $eventImage->temporaryUrl() }}" class="w-full h-24 object-cover rounded-lg mb-1">
                             @elseif ($existingEventImageUrl)
-                                <img src="{{ $existingEventImageUrl }}" class="w-full h-40 object-cover rounded-lg mb-2">
+                                <img src="{{ $existingEventImageUrl }}" class="w-full h-24 object-cover rounded-lg mb-1">
                             @endif
 
                             <input type="file" wire:model="eventImage" accept="image/*" class="text-sm">

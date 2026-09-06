@@ -1,1 +1,0 @@
-<h1>Liste des clubs</h1>

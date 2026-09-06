@@ -15,14 +15,59 @@
                 <img src="{{ asset('storage/' . $event->image) }}" class="w-full h-64 object-cover">
             @endif
             <div class="p-8">
-                <a href="{{ route('clubs.show', $event->club) }}"
-                   class="text-pine-600 font-semibold text-sm hover:underline">
-                    {{ $event->club->name }}
-                </a>
-                <h1 class="text-2xl font-bold text-ink mt-1 mb-4">
-                    {{ $event->title }}
-                </h1>
-                <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-500 mb-6">
+                <div class="flex items-start justify-between gap-4">
+
+                    <div>
+                        <a href="{{ route('clubs.show', $event->club) }}"
+                           class="text-pine-600 font-semibold text-sm hover:underline">
+                            {{ $event->club->name }}
+                        </a>
+                        <h1 class="text-2xl font-bold text-ink mt-1">
+                            {{ $event->title }}
+                        </h1>
+                    </div>
+
+                    {{-- Menu "⋮" — Modifier/Supprimer, réservé à l'organisateur de cet événement --}}
+                    @if ($isOrganizer)
+
+                        <div x-data="{ open: false }" class="relative shrink-0">
+
+                            <button
+                                @click="open = ! open"
+                                class="text-muted-500 hover:text-ink px-2">
+                                <x-lucide-more-vertical class="w-5 h-5" />
+                            </button>
+
+                            <div
+                                x-show="open"
+                                @click.outside="open = false"
+                                x-cloak
+                                class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-muted-200 py-1 z-10">
+
+                                <a
+                                    href="{{ route('clubs.show', $event->club) }}?edit_post={{ $relatedPostId }}"
+                                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-ink hover:bg-pine-50">
+                                    <x-lucide-pencil class="w-4 h-4" />
+                                    Modifier
+                                </a>
+
+                                <button
+                                    wire:click="deleteEvent"
+                                    wire:confirm="Supprimer cet événement et le post associé ? Cette action est définitive."
+                                    class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    <x-lucide-trash-2 class="w-4 h-4" />
+                                    Supprimer
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-500 mb-6 mt-4">
                     <span class="flex items-center gap-1.5">
                         <x-lucide-calendar class="w-4 h-4" />
                         {{ $event->date->translatedFormat('d F Y à H:i') }}
