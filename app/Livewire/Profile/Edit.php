@@ -306,8 +306,15 @@ class Edit extends Component
      *
      * Règle : la suppression du compte ne bloque JAMAIS, quel que soit
      * l'état des clubs présidés par l'utilisateur (même règle que côté
-     * admin dans Admin\Dashboard::confirmUserBanToggle()).
+     * admin dans Admin\Dashboard::confirmUserBanToggle()) — SAUF un cas
+     * particulier : si l'utilisateur est l'UNIQUE super admin de la
+     * plateforme, la suppression est bloquée, sinon la plateforme se
+     * retrouve sans aucun administrateur et personne ne peut plus gérer
+     * les bannissements, transferts de présidence, etc.
      *
+     * - Unique super admin : blocage immédiat, avant même de valider le
+     *   mot de passe (inutile de le demander pour une action qui sera
+     *   refusée de toute façon).
      * - Pas président d'un club : suppression immédiate (inchangé).
      * - Président d'au moins un club : ferme la modale de mot de passe et
      *   ouvre la modale récapitulative (choix de successeur pour les clubs
@@ -317,11 +324,17 @@ class Edit extends Component
      */
     public function deleteUser(Logout $logout): void
     {
+        $user = Auth::user();
+
+        if ($user->role === 'superAdmin' && User::where('role', 'superAdmin')->count() === 1) {
+            throw ValidationException::withMessages([
+                'delete_password' => 'Vous êtes l\'unique administrateur de la plateforme. Vous ne pouvez pas supprimer votre compte tant qu\'aucun autre super admin n\'existe.',
+            ]);
+        }
+
         $this->validate([
             'delete_password' => ['required', 'string', 'current_password'],
         ]);
-
-        $user = Auth::user();
 
         $clubsAsPresident = $user->clubs()->get();
 
@@ -387,10 +400,24 @@ class Edit extends Component
      * + déconnexion réelle au lieu d'un bannissement. Note : la notification
      * admin ajoutée ici ne concerne QUE la suppression de compte, pas le
      * bannissement (décision actée avec l'utilisatrice).
+     *
+     * Sécurité en profondeur : on revérifie ici la règle "unique super
+     * admin", même si deleteUser() bloque déjà normalement en amont. En
+     * Livewire, une méthode publique du composant peut en théorie être
+     * appelée directement depuis le frontend sans repasser par deleteUser()
+     * — on ne veut pas dépendre uniquement du premier écran pour ce garde-fou.
      */
     public function submitAccountDeletion(Logout $logout): void
     {
         $user = Auth::user();
+
+        if ($user->role === 'superAdmin' && User::where('role', 'superAdmin')->count() === 1) {
+            $this->cancelAccountDeletionSuccessorSelection();
+
+            throw ValidationException::withMessages([
+                'delete_password' => 'Vous êtes l\'unique administrateur de la plateforme. Vous ne pouvez pas supprimer votre compte tant qu\'aucun autre super admin n\'existe.',
+            ]);
+        }
 
         $admins = User::where('role', 'superAdmin')->get();
 
