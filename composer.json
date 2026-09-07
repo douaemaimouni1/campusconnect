@@ -13,7 +13,8 @@
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^3.6.4",
         "livewire/volt": "^1.7.0",
-        "mallardduck/blade-lucide-icons": "^2.0"
+        "mallardduck/blade-lucide-icons": "^2.0",
+        "resend/resend-laravel": "^1.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
