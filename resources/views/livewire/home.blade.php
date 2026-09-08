@@ -89,7 +89,7 @@
                                 <div class="flex items-center gap-3">
 
                                     @if ($post->user->avatar)
-                                        <img src="{{ asset('storage/' . $post->user->avatar) }}"
+                                        <img src="{{ str_starts_with($post->user->avatar, 'http') ? $post->user->avatar : asset('storage/' . $post->user->avatar) }}"
                                              class="w-10 h-10 rounded-full object-cover">
                                     @else
                                         <div class="w-10 h-10 rounded-full bg-pine-50 flex items-center justify-center font-serif font-semibold text-pine-600">
@@ -126,7 +126,7 @@
                                             x-cloak
                                             class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-ink/10 py-1 z-10">
 
-                                            <a
+                                            
                                                 href="{{ route('clubs.show', $post->club) }}?edit_post={{ $post->id }}"
                                                 class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-ink hover:bg-pine-50">
                                                 <x-lucide-pencil class="w-4 h-4" />
@@ -170,8 +170,8 @@
 
                             {{-- Image du post --}}
                             @if ($post->image)
-                                <img src="{{ asset('storage/' . $post->image) }}"
-                                     class="w-full rounded-xl mt-4 max-h-96 object-cover">
+                                <img src="{{ str_starts_with($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}"
+                                     class="w-full h-48 object-cover rounded-lg mt-3">
                             @endif
 
                             {{-- Mini-carte événement lié --}}
@@ -184,7 +184,7 @@
                                 <div class="mt-4 border border-ink/10 rounded-xl p-4">
 
                                     @if ($post->event->image)
-                                        <img src="{{ asset('storage/' . $post->event->image) }}"
+                                        <img src="{{ str_starts_with($post->event->image, 'http') ? $post->event->image : asset('storage/' . $post->event->image) }}"
                                              class="w-full h-40 object-cover rounded-lg mb-3">
                                     @endif
 
@@ -303,7 +303,7 @@
 
                                     <div class="flex items-center gap-2.5 min-w-0">
                                         @if ($club->logo)
-                                            <img src="{{ asset('storage/' . $club->logo) }}"
+                                            <img src="{{ str_starts_with($club->logo, 'http') ? $club->logo : asset('storage/' . $club->logo) }}"
                                                  class="w-8 h-8 rounded-full object-cover shrink-0">
                                         @else
                                             <span class="w-8 h-8 rounded-full bg-pine-50 flex items-center justify-center shrink-0">
