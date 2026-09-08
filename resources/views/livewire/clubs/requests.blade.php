@@ -50,7 +50,7 @@
                             <div class="flex items-center gap-3">
 
                                 @if ($request->user->avatar)
-                                    <img src="{{ asset('storage/' . $request->user->avatar) }}"
+                                        <img src="{{ str_starts_with($request->user->avatar, 'http') ? $request->user->avatar : asset('storage/' . $request->user->avatar) }}"
                                          class="w-11 h-11 rounded-full object-cover">
                                 @else
                                     <div class="w-11 h-11 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600">
@@ -130,7 +130,7 @@
                             <div class="flex items-center gap-3">
 
                                 @if ($request->user->avatar)
-                                    <img src="{{ asset('storage/' . $request->user->avatar) }}"
+                                   <img src="{{ str_starts_with($request->user->avatar, 'http') ? $request->user->avatar : asset('storage/' . $request->user->avatar) }}"
                                          class="w-11 h-11 rounded-full object-cover">
                                 @else
                                     <div class="w-11 h-11 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600">

@@ -6,7 +6,8 @@
         <div class="bg-white rounded-2xl shadow p-8 mb-6 text-center">
 
             @if ($user->avatar)
-                <img src="{{ asset('storage/' . $user->avatar) }}"
+            <img src="{{ str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . $user->avatar) }}"
+                
                      class="w-28 h-28 rounded-full object-cover mx-auto mb-4">
             @else
                 <div class="w-28 h-28 rounded-full bg-pine-50 flex items-center justify-center text-4xl font-serif font-semibold text-pine-600 mx-auto mb-4">

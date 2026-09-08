@@ -95,7 +95,7 @@
 
                         <div class="h-32 bg-pine-700 flex items-center justify-center">
                             @if ($club->logo)
-                                <img src="{{ asset('storage/' . $club->logo) }}"
+                               <img src="{{ str_starts_with($club->logo, 'http') ? $club->logo : asset('storage/' . $club->logo) }}"
                                      class="w-20 h-20 rounded-full object-cover border-4 border-white shadow">
                             @else
                                 <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center border-4 border-white shadow">

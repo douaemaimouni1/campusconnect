@@ -38,7 +38,7 @@
                            class="flex items-center gap-3 hover:opacity-80 transition">
 
                             @if ($membership->user->avatar)
-                                <img src="{{ asset('storage/' . $membership->user->avatar) }}"
+                                <img src="{{ str_starts_with($membership->user->avatar, 'http') ? $membership->user->avatar : asset('storage/' . $membership->user->avatar) }}"
                                      class="w-11 h-11 rounded-full object-cover">
                             @else
                                 <div class="w-11 h-11 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600">

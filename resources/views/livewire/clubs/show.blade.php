@@ -19,7 +19,7 @@
 
             <div class="h-40 bg-pine-700 rounded-t-2xl overflow-hidden">
                 @if ($club->banner)
-                    <img src="{{ asset('storage/' . $club->banner) }}" class="w-full h-full object-cover">
+                    <img src="{{ str_starts_with($club->banner, 'http') ? $club->banner : asset('storage/' . $club->banner) }}" class="w-full h-full object-cover">
                 @endif
             </div>
 
@@ -28,7 +28,7 @@
                 {{-- Avatar + nom : chevauchent volontairement la bannière (marge négative isolée) --}}
                  <div class="-mt-12 mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
                     @if ($club->logo)
-                        <img src="{{ asset('storage/' . $club->logo) }}"
+                        <img src="{{ str_starts_with($club->logo, 'http') ? $club->logo : asset('storage/' . $club->logo) }}"
                              class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg bg-white shrink-0">
                     @else
                         <div class="w-28 h-28 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center shrink-0">
@@ -133,7 +133,7 @@
                     <a href="{{ route('profile.show', $club->president) }}"
                        class="flex items-center gap-3 hover:opacity-80 transition">
                         @if ($club->president->avatar)
-                            <img src="{{ asset('storage/' . $club->president->avatar) }}"
+                            <img src="{{ str_starts_with($club->president->avatar, 'http') ? $club->president->avatar : asset('storage/' . $club->president->avatar) }}"
                                  class="w-9 h-9 rounded-full object-cover">
                         @else
                             <div class="w-9 h-9 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600 text-xs">
@@ -196,7 +196,7 @@
                             <div class="flex items-center gap-3">
 
                                 @if ($club->logo)
-                                    <img src="{{ asset('storage/' . $club->logo) }}"
+                                    <img src="{{ str_starts_with($club->logo, 'http') ? $club->logo : asset('storage/' . $club->logo) }}"
                                          class="w-10 h-10 rounded-full object-cover">
                                 @else
                                     <div class="w-10 h-10 rounded-full bg-pine-100 flex items-center justify-center">
@@ -273,7 +273,7 @@
                         </p>
 
                         @if ($post->image)
-                            <img src="{{ asset('storage/' . $post->image) }}"
+                            <img src="{{ str_starts_with($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}"
                                  class="w-full rounded-xl mt-4 max-h-96 object-cover">
                         @endif
 
@@ -289,7 +289,7 @@
                             <div class="mt-4 border border-pine-100 rounded-xl p-4">
 
                                 @if ($linkedEvent->image)
-                                    <img src="{{ asset('storage/' . $linkedEvent->image) }}"
+                                    <img src="{{ str_starts_with($linkedEvent->image, 'http') ? $linkedEvent->image : asset('storage/' . $linkedEvent->image) }}"
                                          class="w-full h-40 object-cover rounded-lg mb-3">
                                 @endif
 
@@ -417,7 +417,7 @@
                                class="flex items-center gap-3 hover:opacity-80 transition">
 
                                 @if ($membership->user->avatar)
-                                    <img src="{{ asset('storage/' . $membership->user->avatar) }}"
+                                    <img src="{{ str_starts_with($membership->user->avatar, 'http') ? $membership->user->avatar : asset('storage/' . $membership->user->avatar) }}"
                                          class="w-10 h-10 rounded-full object-cover">
                                 @else
                                     <div class="w-10 h-10 rounded-full bg-pine-100 flex items-center justify-center font-semibold text-pine-600 text-sm">

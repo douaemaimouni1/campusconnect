@@ -47,7 +47,7 @@
                          class="bg-white rounded-xl shadow overflow-hidden hover:shadow-xl transition duration-300 border-l-4 border-l-pine-500">
 
                         @if ($event->image)
-                            <img src="{{ asset('storage/' . $event->image) }}" class="w-full h-44 object-cover">
+                           <img src="{{ str_starts_with($event->image, 'http') ? $event->image : asset('storage/' . $event->image) }}" class="w-full h-44 object-cover">
                         @endif
 
                         <div class="p-5">

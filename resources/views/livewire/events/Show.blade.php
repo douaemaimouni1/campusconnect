@@ -12,8 +12,7 @@
         @endif
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
             @if ($event->image)
-                <img src="{{ asset('storage/' . $event->image) }}" class="w-full h-64 object-cover">
-            @endif
+               <img src="{{ str_starts_with($event->image, 'http') ? $event->image : asset('storage/' . $event->image) }}" class="w-full h-64 object-cover">
             <div class="p-8">
                 <div class="flex items-start justify-between gap-4">
 
