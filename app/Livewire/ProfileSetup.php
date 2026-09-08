@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\CloudinaryUploadService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ class ProfileSetup extends Component
     public $avatar;
 
 
-    public function save()
+    public function save(CloudinaryUploadService $cloudinary)
     {
         $user = Auth::user();
 
@@ -23,7 +24,7 @@ class ProfileSetup extends Component
             'department' => $this->department,
             'bio' => $this->bio,
             'avatar' => $this->avatar
-                ? $this->avatar->store('avatars', 'public')
+                ? $cloudinary->upload($this->avatar, 'avatars')
                 : null,
 
             'profile_completed' => true,

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Livewire\Profile;
-
+use App\Services\CloudinaryUploadService;
 use App\Livewire\Actions\Logout;
 use App\Mail\VerificationCodeMail;
 use App\Models\Club;
@@ -108,7 +108,7 @@ class Edit extends Component
      * (voir verifyEmailChangeCode()). L'email réel n'est mis à jour que
      * si le code saisi est correct.
      */
-    public function updateProfileInformation(): void
+    public function updateProfileInformation(CloudinaryUploadService $cloudinary): void
     {
         $user = Auth::user();
 
@@ -138,13 +138,9 @@ class Edit extends Component
 
         $user->bio = $validated['bio'];
 
-        // Upload du nouvel avatar : on supprime l'ancien fichier avant d'enregistrer le nouveau
+        // Upload du nouvel avatar vers Cloudinary
         if ($this->avatar) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-
-            $user->avatar = $this->avatar->store('avatars', 'public');
+            $user->avatar = $cloudinary->upload($this->avatar, 'avatars');
         }
 
         $user->save();
@@ -265,13 +261,11 @@ class Edit extends Component
         $this->email_verification_code = '';
         $this->email = $user->email;
     }
-
     public function deleteAvatar(): void
     {
         $user = Auth::user();
 
         if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
             $user->avatar = null;
             $user->save();
         }

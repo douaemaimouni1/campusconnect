@@ -5,6 +5,7 @@ namespace App\Livewire\Events;
 use App\Models\Club;
 use App\Models\ClubPost;
 use App\Models\Event;
+use App\Services\CloudinaryUploadService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -53,9 +54,7 @@ class Form extends Component
             $this->date = $event->date->format('Y-m-d\TH:i');
             $this->capacity = $event->capacity;
 
-            if ($event->image) {
-                $this->existingImageUrl = asset('storage/' . $event->image);
-            }
+            $this->existingImageUrl = $event->image;
         } else {
             // --------- CRÉATION ---------
             abort_if($club->president_id !== Auth::id(), 403);
@@ -64,7 +63,7 @@ class Form extends Component
         }
     }
 
-    public function save()
+    public function save(CloudinaryUploadService $cloudinary)
     {
         $this->validate();
 
@@ -77,7 +76,7 @@ class Form extends Component
         ];
 
         if ($this->image) {
-            $data['image'] = $this->image->store('events/images', 'public');
+            $data['image'] = $cloudinary->upload($this->image, 'events');
         }
 
         if ($this->event) {

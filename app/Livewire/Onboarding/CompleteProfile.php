@@ -7,6 +7,7 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Support\DepartmentList;
+use App\Services\CloudinaryUploadService;
 
 class CompleteProfile extends Component
 {
@@ -115,7 +116,7 @@ class CompleteProfile extends Component
         $user->bio = $this->bio;
 
         if ($this->avatar) {
-            $user->avatar = $this->avatar->store('avatars', 'public');
+            $user->avatar = app(CloudinaryUploadService::class)->upload($this->avatar, 'avatars');
         }
 
         $user->profile_completed = true;

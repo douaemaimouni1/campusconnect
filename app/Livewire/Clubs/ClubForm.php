@@ -3,6 +3,7 @@
 namespace App\Livewire\Clubs;
 
 use App\Models\Club;
+use App\Services\CloudinaryUploadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -104,13 +105,10 @@ class ClubForm extends Component
                 $this->customCategory = $club->category;
             }
 
-            if ($club->logo) {
-                $this->existingLogoUrl = asset('storage/' . $club->logo);
-            }
-
-            if ($club->banner) {
-                $this->existingBannerUrl = asset('storage/' . $club->banner);
-            }
+            // Cloudinary stocke déjà une URL absolue complète en base,
+            // plus besoin de la reconstruire avec asset('storage/...').
+            $this->existingLogoUrl = $club->logo;
+            $this->existingBannerUrl = $club->banner;
         }
     }
 
@@ -138,7 +136,7 @@ class ClubForm extends Component
         $this->dispatch('cancel-club-form');
     }
 
-    public function save()
+    public function save(CloudinaryUploadService $cloudinary)
     {
         // --- Sécurité, au cas où la synchro live n'aurait pas eu lieu ---
         if ($this->categorySelection === self::AUTRE_KEY) {
@@ -160,11 +158,11 @@ class ClubForm extends Component
             ];
 
             if ($this->logo) {
-                $data['logo'] = $this->logo->store('clubs/logos', 'public');
+                $data['logo'] = $cloudinary->upload($this->logo, 'clubs/logos');
             }
 
             if ($this->banner) {
-                $data['banner'] = $this->banner->store('clubs/banners', 'public');
+                $data['banner'] = $cloudinary->upload($this->banner, 'clubs/banners');
             }
 
             $this->club->update($data);
@@ -183,11 +181,11 @@ class ClubForm extends Component
             ];
 
             if ($this->logo) {
-                $data['logo'] = $this->logo->store('clubs/logos', 'public');
+                $data['logo'] = $cloudinary->upload($this->logo, 'clubs/logos');
             }
 
             if ($this->banner) {
-                $data['banner'] = $this->banner->store('clubs/banners', 'public');
+                $data['banner'] = $cloudinary->upload($this->banner, 'clubs/banners');
             }
 
             $this->club = Club::create($data);

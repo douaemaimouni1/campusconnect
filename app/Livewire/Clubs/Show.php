@@ -10,6 +10,7 @@ use App\Models\EventRegistration;
 use App\Models\User;
 use App\Notifications\ClubMembershipRequested;
 use App\Notifications\EventRegistrationRequested;
+use App\Services\CloudinaryUploadService;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -153,11 +154,11 @@ class Show extends Component
             $this->eventLocation = $post->event->location;
             $this->eventDate = $post->event->date->format('Y-m-d\TH:i');
             $this->eventCapacity = $post->event->capacity;
-            $this->existingEventImageUrl = $post->event->image ? asset('storage/' . $post->event->image) : null;
+            $this->existingEventImageUrl = $post->event->image;
         } else {
             $this->postType = 'post';
             $this->postContent = $post->content;
-            $this->existingPostImageUrl = $post->image ? asset('storage/' . $post->image) : null;
+            $this->existingPostImageUrl = $post->image;
         }
 
         $this->showPostModal = true;
@@ -184,7 +185,7 @@ class Show extends Component
         $this->resetErrorBag();
     }
 
-    public function savePost()
+    public function savePost(CloudinaryUploadService $cloudinary)
     {
         abort_if($this->club->president_id !== Auth::id(), 403);
 
@@ -208,7 +209,7 @@ class Show extends Component
             ];
 
             if ($this->eventImage) {
-                $eventData['image'] = $this->eventImage->store('events', 'public');
+                $eventData['image'] = $cloudinary->upload($this->eventImage, 'events');
             }
 
             if ($this->editingEvent) {
@@ -244,7 +245,7 @@ class Show extends Component
             ];
 
             if ($this->postImage) {
-                $postData['image'] = $this->postImage->store('posts', 'public');
+                $postData['image'] = $cloudinary->upload($this->postImage, 'posts');
             }
 
             if ($this->editingPost) {
