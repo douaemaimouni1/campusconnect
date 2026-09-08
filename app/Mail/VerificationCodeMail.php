@@ -23,6 +23,7 @@ class VerificationCodeMail extends Mailable
     public function build()
     {
         return $this->subject('Votre code de vérification CampusConnect')
-            ->view('emails.verification-code');
+            ->view('emails.verification-code')
+            ->text('emails.verification-code-text');
     }
 }
