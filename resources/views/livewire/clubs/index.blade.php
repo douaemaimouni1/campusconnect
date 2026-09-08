@@ -93,12 +93,17 @@
                     <div wire:key="club-{{ $club->id }}"
                          class="bg-white rounded-xl shadow overflow-hidden hover:shadow-xl transition duration-300 border-2 border-muted-300">
 
-                        <div class="h-32 bg-pine-700 flex items-center justify-center">
+                        <div class="h-32 bg-pine-700 flex items-center justify-center relative overflow-hidden">
+                            @if ($club->banner)
+                                <img src="{{ str_starts_with($club->banner, 'http') ? $club->banner : asset('storage/' . $club->banner) }}"
+                                     class="absolute inset-0 w-full h-full object-cover">
+                            @endif
+
                             @if ($club->logo)
                                <img src="{{ str_starts_with($club->logo, 'http') ? $club->logo : asset('storage/' . $club->logo) }}"
-                                     class="w-20 h-20 rounded-full object-cover border-4 border-white shadow">
+                                     class="relative w-20 h-20 rounded-full object-cover border-4 border-white shadow">
                             @else
-                                <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center border-4 border-white shadow">
+                                <div class="relative w-20 h-20 rounded-full bg-white flex items-center justify-center border-4 border-white shadow">
                                     <span class="text-pine-700 font-serif font-bold text-xl">{{ $initials }}</span>
                                 </div>
                             @endif
