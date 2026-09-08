@@ -13,6 +13,7 @@
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
             @if ($event->image)
                <img src="{{ str_starts_with($event->image, 'http') ? $event->image : asset('storage/' . $event->image) }}" class="w-full h-64 object-cover">
+            @endif
             <div class="p-8">
                 <div class="flex items-start justify-between gap-4">
 
@@ -43,7 +44,7 @@
                                 x-cloak
                                 class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-muted-200 py-1 z-10">
 
-                                <a
+                                
                                     href="{{ route('clubs.show', $event->club) }}?edit_post={{ $relatedPostId }}"
                                     class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-ink hover:bg-pine-50">
                                     <x-lucide-pencil class="w-4 h-4" />
