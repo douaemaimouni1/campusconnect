@@ -44,7 +44,7 @@
                     @if ($avatar)
                         <img src="{{ $avatar->temporaryUrl() }}" class="w-12 h-12 rounded-full object-cover shrink-0">
                     @elseif (auth()->user()->avatar)
-                        <img src="{{ Storage::url(auth()->user()->avatar) }}" class="w-12 h-12 rounded-full object-cover shrink-0">
+                         <img src="{{ str_starts_with(auth()->user()->avatar, 'http') ? auth()->user()->avatar : Storage::url(auth()->user()->avatar) }}" class="w-12 h-12 rounded-full object-cover shrink-0">
                     @else
                         <div class="w-12 h-12 rounded-full bg-pine-50 flex items-center justify-center text-pine-600 text-base font-semibold shrink-0">
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
