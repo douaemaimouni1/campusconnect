@@ -12,7 +12,7 @@
         @endif
         <div class="bg-white rounded-2xl shadow overflow-hidden mb-6">
             @if ($event->image)
-               <img src="{{ str_starts_with($event->image, 'http') ? $event->image : asset('storage/' . $event->image) }}" class="w-full h-64 object-contain bg-pine-700">
+               <img src="{{ str_starts_with($event->image, 'http') ? $event->image : asset('storage/' . $event->image) }}" class="w-full h-64 object-cover object-top">
             @endif
             <div class="p-8">
                 <div class="flex items-start justify-between gap-4">

@@ -168,11 +168,11 @@
                                 {{ $post->content }}
                             </p>
 
-       {{-- Image du post --}}
-@if ($post->image)
-    <img src="{{ str_starts_with($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}"
-         class="w-full h-48 object-contain bg-ink/5 rounded-lg mt-3">
-@endif
+                            {{-- Image du post --}}
+                            @if ($post->image)
+                                <img src="{{ str_starts_with($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}"
+                                     class="w-full h-48 object-cover object-top rounded-lg mt-3">
+                            @endif
 
                             {{-- Mini-carte événement lié --}}
                             @if ($post->event)
@@ -184,8 +184,8 @@
                                 <div class="mt-4 border border-ink/10 rounded-xl p-4">
 
                                     @if ($post->event->image)
-<img src="{{ str_starts_with($post->event->image, 'http') ? $post->event->image : asset('storage/' . $post->event->image) }}"
-     class="w-full h-40 object-contain bg-ink/5 rounded-lg mb-3">
+                                        <img src="{{ str_starts_with($post->event->image, 'http') ? $post->event->image : asset('storage/' . $post->event->image) }}"
+                                             class="w-full h-40 object-cover object-top rounded-lg mb-3">
                                     @endif
 
                                     <h4 class="font-serif font-bold text-ink">{{ $post->event->title }}</h4>

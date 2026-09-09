@@ -19,7 +19,7 @@
 
             <div class="h-40 bg-pine-700 rounded-t-2xl overflow-hidden">
                 @if ($club->banner)
-                    <img src="{{ str_starts_with($club->banner, 'http') ? $club->banner : asset('storage/' . $club->banner) }}" class="w-full h-full object-contain bg-pine-700">
+                    <img src="{{ str_starts_with($club->banner, 'http') ? $club->banner : asset('storage/' . $club->banner) }}" class="w-full h-full object-cover object-top">
                 @endif
             </div>
 
@@ -274,7 +274,7 @@
 
                         @if ($post->image)
                             <img src="{{ str_starts_with($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}"
-                                 class="w-full rounded-xl mt-4 max-h-96 object-contain bg-ink/5">
+                                 class="w-full rounded-xl mt-4 max-h-96 object-cover object-top">
                         @endif
 
                         {{-- Mini-carte événement, seulement si le post est lié à un événement --}}
@@ -290,7 +290,7 @@
 
                                 @if ($linkedEvent->image)
                                     <img src="{{ str_starts_with($linkedEvent->image, 'http') ? $linkedEvent->image : asset('storage/' . $linkedEvent->image) }}"
-                                         class="w-full h-40 object-contain bg-ink/5 rounded-lg mb-3">
+                                         class="w-full h-40 object-cover object-top rounded-lg mb-3">
                                 @endif
 
                                 <h4 class="font-serif font-bold text-ink">{{ $linkedEvent->title }}</h4>
