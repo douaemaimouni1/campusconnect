@@ -45,7 +45,8 @@
             <h3 class="font-semibold text-lg text-ink">🏛 Gestion des clubs</h3>
         </div>
 
-        <table class="w-full text-left">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[640px]">
             <thead class="bg-gray-50 text-sm text-muted-500">
                 <tr>
                     <th class="px-5 py-3">Nom</th>
@@ -58,9 +59,9 @@
             <tbody class="divide-y">
                 @forelse ($clubs as $club)
                     <tr wire:key="club-{{ $club->id }}">
-                        <td class="px-5 py-3 font-medium text-ink">{{ $club->name }}</td>
-                        <td class="px-5 py-3 text-muted-500">{{ $club->category }}</td>
-                        <td class="px-5 py-3 text-muted-500">
+                        <td class="px-5 py-3 font-medium text-ink whitespace-nowrap">{{ $club->name }}</td>
+                        <td class="px-5 py-3 text-muted-500 whitespace-nowrap">{{ $club->category }}</td>
+                        <td class="px-5 py-3 text-muted-500 whitespace-nowrap">
                             @if ($club->president)
                                 {{ $club->president->name }}
                             @else
@@ -72,8 +73,8 @@
                                 </button>
                             @endif
                         </td>
-                        <td class="px-5 py-3 text-muted-500">{{ $club->members_count }}</td>
-                        <td class="px-5 py-3 text-right">
+                        <td class="px-5 py-3 text-muted-500 whitespace-nowrap">{{ $club->members_count }}</td>
+                        <td class="px-5 py-3 text-right whitespace-nowrap">
                             <button
                                 wire:click="confirmClubDeletion({{ $club->id }})"
                                 class="text-red-600 hover:text-red-800 text-sm font-medium">
@@ -90,6 +91,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
 
         <div class="px-5 py-4">
             {{ $clubs->links() }}
@@ -104,7 +106,8 @@
             <h3 class="font-semibold text-lg text-ink">👥 Gestion des utilisateurs</h3>
         </div>
 
-        <table class="w-full text-left">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[720px]">
             <thead class="bg-gray-50 text-sm text-muted-500">
                 <tr>
                     <th class="px-5 py-3">Nom</th>
@@ -118,10 +121,10 @@
             <tbody class="divide-y">
                 @forelse ($users as $user)
                     <tr wire:key="user-{{ $user->id }}">
-                        <td class="px-5 py-3 font-medium text-ink">{{ $user->name }}</td>
-                        <td class="px-5 py-3 text-muted-500">{{ $user->email }}</td>
-                        <td class="px-5 py-3 text-muted-500">{{ $user->department ?? '—' }}</td>
-                        <td class="px-5 py-3">
+                        <td class="px-5 py-3 font-medium text-ink whitespace-nowrap">{{ $user->name }}</td>
+                        <td class="px-5 py-3 text-muted-500 whitespace-nowrap">{{ $user->email }}</td>
+                        <td class="px-5 py-3 text-muted-500 whitespace-nowrap">{{ $user->department ?? '—' }}</td>
+                        <td class="px-5 py-3 whitespace-nowrap">
                             @if ($user->isSuperAdmin())
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pine-100 text-pine-700">
                                     👑 Super Admin
@@ -132,7 +135,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-5 py-3">
+                        <td class="px-5 py-3 whitespace-nowrap">
                             @if ($user->is_banned)
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
                                     ⛔ Suspendu
@@ -143,7 +146,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-5 py-3 text-right">
+                        <td class="px-5 py-3 text-right whitespace-nowrap">
                             @if ($user->id === auth()->id())
                                 <span class="text-muted-500 text-sm">— c'est vous —</span>
                             @elseif ($user->is_banned)
@@ -170,6 +173,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
 
         <div class="px-5 py-4">
             {{ $users->links() }}

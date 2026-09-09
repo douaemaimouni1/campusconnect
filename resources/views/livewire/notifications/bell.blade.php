@@ -23,10 +23,10 @@
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="absolute z-50 mt-2 w-80 right-0 rounded-md shadow-lg"
+        class="fixed sm:absolute z-50 inset-x-3 top-16 sm:inset-x-auto sm:top-auto sm:mt-2 sm:w-80 sm:right-0 rounded-md shadow-lg"
         style="display: none;"
     >
-        <div class="rounded-md ring-1 ring-black ring-opacity-5 bg-white max-h-96 overflow-y-auto">
+        <div class="rounded-md ring-1 ring-black ring-opacity-5 bg-white max-h-[70vh] sm:max-h-96 overflow-y-auto">
 
             @forelse ($notifications as $notification)
                 <div wire:key="notification-{{ $notification->id }}" class="p-4 border-b border-muted/15 last:border-b-0 {{ $notification->read_at ? 'bg-white' : 'bg-pine-50' }}">
