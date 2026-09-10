@@ -1,12 +1,16 @@
-<?php
+\<?php
 
 use Illuminate\Support\Str;
 
 return [
 
-    'default' => env('MAIL_MAILER', 'resend'),
+    'default' => env('MAIL_MAILER', 'brevo'),
 
     'mailers' => [
+
+        'brevo' => [
+            'transport' => 'brevo',
+        ],
 
         'resend' => [
             'transport' => 'resend',
