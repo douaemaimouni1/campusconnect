@@ -126,7 +126,7 @@
                                             x-cloak
                                             class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-ink/10 py-1 z-10">
 
-                                            
+                                            <a
                                                 href="{{ route('clubs.show', $post->club) }}?edit_post={{ $post->id }}"
                                                 class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-ink hover:bg-pine-50">
                                                 <x-lucide-pencil class="w-4 h-4" />
