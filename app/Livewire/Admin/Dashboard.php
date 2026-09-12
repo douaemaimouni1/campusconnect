@@ -63,16 +63,32 @@ class Dashboard extends Component
         $this->confirmingClubDeletion = null;
     }
 
+    /**
+     * Supprime le club en attente de confirmation.
+     *
+     * Utilise find() (et non findOrFail()) car cette méthode peut être
+     * invoquée deux fois de suite si l'utilisateur double-clique avant que
+     * l'interface n'ait fini de se mettre à jour (ce qui arrivait avec un
+     * findOrFail(null) provoquant un 404 sur le 2e appel). On ignore alors
+     * silencieusement l'appel en trop.
+     */
     public function deleteClub(): void
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
-        $club = Club::findOrFail($this->confirmingClubDeletion);
+        if (! $this->confirmingClubDeletion) {
+            return;
+        }
+
+        $club = Club::find($this->confirmingClubDeletion);
+        $this->confirmingClubDeletion = null;
+
+        if (! $club) {
+            return;
+        }
 
         $club->events()->delete();
         $club->delete();
-
-        $this->confirmingClubDeletion = null;
 
         session()->flash('success', "Le club « {$club->name} » et ses événements ont été supprimés.");
     }
@@ -148,12 +164,26 @@ class Dashboard extends Component
     /**
      * Bannissement/réactivation "simple" : soit une réactivation, soit le
      * bannissement d'un utilisateur qui n'est président d'aucun club.
+     *
+     * Utilise find() (et non findOrFail()) pour tolérer un double-clic sur le
+     * bouton "Confirmer" : le 2e appel, une fois $confirmingUserBanToggle
+     * remis à null par le 1er, est simplement ignoré au lieu de provoquer un
+     * 404 (ModelNotFoundException).
      */
     public function toggleUserBan(): void
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
-        $user = User::findOrFail($this->confirmingUserBanToggle);
+        if (! $this->confirmingUserBanToggle) {
+            return;
+        }
+
+        $user = User::find($this->confirmingUserBanToggle);
+        $this->confirmingUserBanToggle = null;
+
+        if (! $user) {
+            return;
+        }
 
         abort_if($user->id === auth()->id(), 403);
 
@@ -163,8 +193,6 @@ class Dashboard extends Component
 
         $user->is_banned = ! $user->is_banned;
         $user->save();
-
-        $this->confirmingUserBanToggle = null;
 
         session()->flash(
             'success',
@@ -184,12 +212,25 @@ class Dashboard extends Component
      *   manuellement.
      * - Pour les clubs SANS successeur : passent directement à
      *   president_id = NULL, en attente d'intervention administrative.
+     *
+     * Utilise find() par cohérence avec deleteClub()/toggleUserBan() : un
+     * double-clic ne doit jamais provoquer un 404.
      */
     public function submitUserBan(): void
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
-        $user = User::findOrFail($this->selectingSuccessorUserId);
+        if (! $this->selectingSuccessorUserId) {
+            return;
+        }
+
+        $user = User::find($this->selectingSuccessorUserId);
+
+        if (! $user) {
+            $this->cancelSuccessorSelection();
+
+            return;
+        }
 
         abort_if($user->id === auth()->id(), 403);
 
@@ -261,7 +302,11 @@ class Dashboard extends Component
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
 
-        $club = Club::findOrFail($clubId);
+        $club = Club::find($clubId);
+
+        if (! $club) {
+            return;
+        }
 
         // Sécurité en profondeur : le bouton ne doit apparaître côté vue que
         // pour un club sans président, mais on ne fait jamais confiance
@@ -297,13 +342,26 @@ class Dashboard extends Component
      * notification (réutilise ClubPresidencyTransferProposed) et doit
      * accepter depuis Notifications\Bell::respondToTransfer() pour devenir
      * effectivement président.
+     *
+     * Guards assouplis (find() au lieu de findOrFail(), sortie silencieuse
+     * si $proposingPresidentForClub est déjà à null) pour éviter un 404 en
+     * cas de double-clic, comme pour deleteClub()/toggleUserBan().
      */
     public function proposePresident(int $userId): void
     {
         abort_if(! auth()->user()->isSuperAdmin(), 403);
-        abort_if(! $this->proposingPresidentForClub, 403);
 
-        $club = Club::findOrFail($this->proposingPresidentForClub);
+        if (! $this->proposingPresidentForClub) {
+            return;
+        }
+
+        $club = Club::find($this->proposingPresidentForClub);
+
+        if (! $club) {
+            $this->cancelPresidentProposal();
+
+            return;
+        }
 
         // Revérification : le club doit toujours être orphelin au moment du clic.
         abort_if($club->president_id !== null, 403);
@@ -314,7 +372,11 @@ class Dashboard extends Component
 
         abort_if($alreadyPending, 409);
 
-        $candidate = User::findOrFail($userId);
+        $candidate = User::find($userId);
+
+        if (! $candidate) {
+            return;
+        }
 
         abort_if($candidate->is_banned || ! $candidate->profile_completed, 422);
 

@@ -68,7 +68,9 @@
                                 <span class="text-muted-500">—</span>
                                 <button
                                     wire:click="openPresidentProposal({{ $club->id }})"
-                                    class="ml-2 text-pine-600 hover:text-pine-800 text-xs font-medium">
+                                    wire:loading.attr="disabled"
+                                    wire:target="openPresidentProposal({{ $club->id }})"
+                                    class="ml-2 text-pine-600 hover:text-pine-800 text-xs font-medium disabled:opacity-50">
                                     👑 Proposer un président
                                 </button>
                             @endif
@@ -77,7 +79,9 @@
                         <td class="px-5 py-3 text-right whitespace-nowrap">
                             <button
                                 wire:click="confirmClubDeletion({{ $club->id }})"
-                                class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                wire:loading.attr="disabled"
+                                wire:target="confirmClubDeletion({{ $club->id }})"
+                                class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50">
                                 🗑️ Supprimer
                             </button>
                         </td>
@@ -152,13 +156,17 @@
                             @elseif ($user->is_banned)
                                 <button
                                     wire:click="confirmUserBanToggle({{ $user->id }})"
-                                    class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                    wire:loading.attr="disabled"
+                                    wire:target="confirmUserBanToggle({{ $user->id }})"
+                                    class="text-green-600 hover:text-green-800 text-sm font-medium disabled:opacity-50">
                                     ✅ Réactiver
                                 </button>
                             @else
                                 <button
                                     wire:click="confirmUserBanToggle({{ $user->id }})"
-                                    class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    wire:loading.attr="disabled"
+                                    wire:target="confirmUserBanToggle({{ $user->id }})"
+                                    class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50">
                                     ⛔ Suspendre
                                 </button>
                             @endif
@@ -193,13 +201,18 @@
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelClubDeletion"
-                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
+                        wire:loading.attr="disabled"
+                        wire:target="deleteClub"
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50 disabled:opacity-50">
                         Annuler
                     </button>
                     <button
                         wire:click="deleteClub"
-                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
-                        🗑️ Supprimer définitivement
+                        wire:loading.attr="disabled"
+                        wire:target="deleteClub"
+                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="deleteClub">🗑️ Supprimer définitivement</span>
+                        <span wire:loading wire:target="deleteClub">Suppression…</span>
                     </button>
                 </div>
             </div>
@@ -217,13 +230,18 @@
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelUserBanToggle"
-                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
+                        wire:loading.attr="disabled"
+                        wire:target="toggleUserBan"
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50 disabled:opacity-50">
                         Annuler
                     </button>
                     <button
                         wire:click="toggleUserBan"
-                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
-                        Confirmer
+                        wire:loading.attr="disabled"
+                        wire:target="toggleUserBan"
+                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="toggleUserBan">Confirmer</span>
+                        <span wire:loading wire:target="toggleUserBan">Traitement…</span>
                     </button>
                 </div>
             </div>
@@ -285,13 +303,18 @@
                 <div class="flex justify-end gap-3">
                     <button
                         wire:click="cancelSuccessorSelection"
-                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50">
+                        wire:loading.attr="disabled"
+                        wire:target="submitUserBan"
+                        class="px-4 py-2 text-sm rounded-md border text-muted-500 hover:bg-pine-50 disabled:opacity-50">
                         Annuler
                     </button>
                     <button
                         wire:click="submitUserBan"
-                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">
-                        ⛔ Confirmer la suspension
+                        wire:loading.attr="disabled"
+                        wire:target="submitUserBan"
+                        class="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="submitUserBan">⛔ Confirmer la suspension</span>
+                        <span wire:loading wire:target="submitUserBan">Traitement…</span>
                     </button>
                 </div>
             </div>
@@ -325,7 +348,9 @@
                             </div>
                             <button
                                 wire:click="proposePresident({{ $candidate->id }})"
-                                class="text-pine-600 hover:text-pine-800 text-xs font-medium">
+                                wire:loading.attr="disabled"
+                                wire:target="proposePresident({{ $candidate->id }})"
+                                class="text-pine-600 hover:text-pine-800 text-xs font-medium disabled:opacity-50">
                                 Proposer
                             </button>
                         </div>
